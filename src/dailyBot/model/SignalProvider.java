@@ -239,30 +239,30 @@ public class SignalProvider extends XMLPersistentObject
         if(hit)
         {
             if(signal.getUniqueId(id.toString()) == 0L)
-                DailyLog.logError("Senal con par: " + signal.getPair() + ", estrategia: " + signal.getStategyId()
+                DailyLog.logError("Senal con par: " + signal.getPair() + ", estrategia: " + signal.getStrategyId()
                     + ", proveedor " + id + " no existe y se intento cerrar.");
             else
             {
                 for(Broker broker : brokers)
                     if(broker.getUniqueId(signal) != 0)
-                        broker.closeSignal(signal, signal.getStategyId(), signal.getPair(), signal.isBuy());
+                        broker.closeSignal(signal, signal.getStrategyId(), signal.getPair(), signal.isBuy());
                 signal.setUniqueId(id.toString(), 0L);
             }
         }
         else
         {
             if(signal.getUniqueId(id.toString()) != 0L)
-                DailyLog.logError("Senal con par: " + signal.getPair() + ", estrategia: " + signal.getStategyId()
+                DailyLog.logError("Senal con par: " + signal.getPair() + ", estrategia: " + signal.getStrategyId()
                     + ", proveedor " + id + " ya existe y se intento abrir otra vez.");
             else
             {
-                if(!filterAllow(new SignalHistoryRecord(signal.getStategyId(), signal.getPair(), signal.isBuy(),
+                if(!filterAllow(new SignalHistoryRecord(signal.getStrategyId(), signal.getPair(), signal.isBuy(),
                     signal.getStartDate())))
                     for(Broker broker : brokers)
                         broker.setUniqueId(signal, 0L);
                 else
                     for(Broker broker : brokers)
-                        broker.openSignal(signal, signal.getStategyId(), signal.getPair(), signal.isBuy());
+                        broker.openSignal(signal, signal.getStrategyId(), signal.getPair(), signal.isBuy());
                 signal.setUniqueId(id.toString(), 1);
             }
         }
@@ -282,7 +282,7 @@ public class SignalProvider extends XMLPersistentObject
             DailyLog.logInfoWithTitle("rangos", id + " abriendo senal por orden manual: " + strategyId + ", " + pair);
             for(Broker broker : brokers)
                 if(broker.getUniqueId(toOpen) == 0L)
-                    broker.openSignal(toOpen, toOpen.getStategyId(), toOpen.getPair(), toOpen.isBuy());
+                    broker.openSignal(toOpen, toOpen.getStrategyId(), toOpen.getPair(), toOpen.isBuy());
         }
     }
 
@@ -291,15 +291,15 @@ public class SignalProvider extends XMLPersistentObject
         if((!signal.isStopTouched()) && (signal.getUniqueId(id.toString()) != 0L))
         {
             DailyLog.logInfoWithTitle("rangos",
-                id + " cerrando por stop " + signal.getStategyId() + ", " + signal.getPair() + " Precio entrada: "
+                id + " cerrando por stop " + signal.getStrategyId() + ", " + signal.getPair() + " Precio entrada: "
                     + signal.getEntryPrice() + " Stop: " + signal.getStop() + " Es compra: " + signal.isBuy());
             for(Broker broker : brokers)
                 if(broker.getUniqueId(signal) != 0)
-                    broker.closeSignal(signal, signal.getStategyId(), signal.getPair(), signal.isBuy());
+                    broker.closeSignal(signal, signal.getStrategyId(), signal.getPair(), signal.isBuy());
             signal.setStopTouched(true);
         }
         else if(!signal.isStopTouched())
-            DailyLog.logError("Senal con par: " + signal.getPair() + ", estrategia: " + signal.getStategyId()
+            DailyLog.logError("Senal con par: " + signal.getPair() + ", estrategia: " + signal.getStrategyId()
                 + ", proveedor " + id + " no existe y se intento cerrar (toco stop).");
     }
 
@@ -324,7 +324,7 @@ public class SignalProvider extends XMLPersistentObject
             for(Broker broker : brokers)
                 if(broker.getUniqueId(toClose) != 0L)
                 {
-                    broker.closeSignal(toClose, toClose.getStategyId(), toClose.getPair(), toClose.isBuy());
+                    broker.closeSignal(toClose, toClose.getStrategyId(), toClose.getPair(), toClose.isBuy());
                     any = true;
                 }
             return any;
@@ -362,7 +362,7 @@ public class SignalProvider extends XMLPersistentObject
                 for(Broker broker : brokers)
                     if(broker.getUniqueId(signal) != 0)
                     {
-                        broker.closeSignal(signal, signal.getStategyId(), signal.getPair(), signal.isBuy());
+                        broker.closeSignal(signal, signal.getStrategyId(), signal.getPair(), signal.isBuy());
                         DailyLog.logError("Proveedor " + this.id + ", estrategia: " + strategyId + ", par: " + pair
                             + " estaba abierta y se desactivo, cerrada manualmente.");
                     }

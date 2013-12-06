@@ -55,14 +55,14 @@ public class DailyTable extends JFrame
         toShow = new Object[listaE.size()][5];
         for(int i = 0; i < listaE.size(); i++)
         {
-            toShow[i][0] = listaE.get(i).getStategyId().toString();
+            toShow[i][0] = listaE.get(i).getStrategyId().toString();
             toShow[i][1] = listaE.get(i).isBuy() + " toco: " + listaE.get(i).isStopTouched();
             toShow[i][2] = listaE.get(i).getPair().toString();
             toShow[i][3] = df.format(listaE.get(i).getEntryPrice()) + " " + df.format(listaE.get(i).stopDaily()) + " "
                 + df.format(listaE.get(i).getStop());
             try
             {
-                toShow[i][4] = RMIClientMain.connection.getProfitStrategySignal(listaE.get(i).getStategyId().ordinal(),
+                toShow[i][4] = RMIClientMain.connection.getProfitStrategySignal(listaE.get(i).getStrategyId().ordinal(),
                     listaE.get(i).getPair().ordinal());
             }
             catch(Exception e)
@@ -89,10 +89,10 @@ public class DailyTable extends JFrame
         toShow = new Object[listaE.size()][5];
         for(int i = 0; i < listaE.size(); i++)
         {
-            toShow[i][0] = listaE.get(i).getStategyId().toString();
+            toShow[i][0] = listaE.get(i).getStrategyId().toString();
             try
             {
-                StrategySignal esta = RMIClientMain.connection.getStrategySignals(listaE.get(i).getStategyId()
+                StrategySignal esta = RMIClientMain.connection.getStrategySignals(listaE.get(i).getStrategyId()
                     .ordinal(), listaE.get(i).getPair().ordinal());
                 if(esta == null)
                 {
@@ -104,7 +104,7 @@ public class DailyTable extends JFrame
                 toShow[i][2] = listaE.get(i).getPair().toString();
                 toShow[i][3] = df.format(esta.getEntryPrice()) + " " + df.format(esta.stopDaily()) + " "
                     + df.format(esta.getStop());
-                toShow[i][4] = RMIClientMain.connection.getProfitStrategySignal(listaE.get(i).getStategyId().ordinal(),
+                toShow[i][4] = RMIClientMain.connection.getProfitStrategySignal(listaE.get(i).getStrategyId().ordinal(),
                     listaE.get(i).getPair().ordinal())
                     + " "
                     + listaE.get(i).getUniqueId("zulutrade-" + signalProviderId.toString());

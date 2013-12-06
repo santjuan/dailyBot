@@ -283,7 +283,7 @@ public class ZulutradeConnection implements Broker
                     if(signal.getPair().differenceInPips(signal.getStop(), signal.isBuy()) < 0
                         && Math.abs(signal.getStop()) > 1e-5d)
                     {
-                        closeSignal(signal, signal.getStategyId(), signal.getPair(), signal.isBuy());
+                        closeSignal(signal, signal.getStrategyId(), signal.getPair(), signal.isBuy());
                         DailyLog.logError("Senal: " + signal + " toco stop, cerrando. Precio actual = "
                             + signal.getPair().getCurrentPrice(signal.isBuy()));
                         if(signal != null)
@@ -301,7 +301,7 @@ public class ZulutradeConnection implements Broker
 
     private String zuluString(ZulutradeSignal zuluSignal, StrategySignal dailySignal)
     {
-        return dailySignal.getStategyId() + " " + (dailySignal.isBuy() ? "Compra" : "Venta") + " "
+        return dailySignal.getStrategyId() + " " + (dailySignal.isBuy() ? "Compra" : "Venta") + " "
             + dailySignal.getLotNumber() + " Lotes de " + zuluSignal.currency + " a: " + zuluSignal.entryPrice
             + " Stop: " + zuluSignal.stop;
     }

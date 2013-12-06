@@ -255,6 +255,8 @@ public class DailyBotMain
             "file:" + DailyProperties.getProperty("dailyBot.control.DailyBotMain.dailyBotFolder") + "/bin/");
         System.setProperty("java.security.policy",
             "file:" + DailyProperties.getProperty("dailyBot.control.DailyBotMain.dailyBotFolder") + "/server.policy");
+        System.setProperty("java.rmi.server.hostname",
+            DailyProperties.getProperty("dailyBot.view.RMIClientMain.RMIAddress"));
     }
 
     public static boolean marketClosed()

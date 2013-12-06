@@ -216,7 +216,7 @@ public class DailyFXStrategySystem extends StrategySystem
             {
                 DailyThreadInfo.registerUpdate("DailyFX updater", "Processing state current signal",
                     "processing signal: " + signal);
-                Strategy current = signal.getStategyId().strategy();
+                Strategy current = signal.getStrategyId().strategy();
                 StrategySignal affected = null;
                 if((affected = current.hasPair(signal.getPair())) != null)
                 {
@@ -306,7 +306,7 @@ public class DailyFXStrategySystem extends StrategySystem
                         "processing existing signal: " + senal);
                     boolean found = false;
                     for(StrategySignal newSignal : readSignals)
-                        if(current.getId().equals(newSignal.getStategyId())
+                        if(current.getId().equals(newSignal.getStrategyId())
                             && senal.getPair().equals(newSignal.getPair()))
                         {
                             found = true;

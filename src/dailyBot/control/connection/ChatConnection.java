@@ -57,7 +57,7 @@ public class ChatConnection
                             {
                                 try
                                 {
-                                    StrategySignal inStrategy = inRead.getStategyId().strategy()
+                                    StrategySignal inStrategy = inRead.getStrategyId().strategy()
                                         .hasPair(inRead.getPair());
                                     answer += "DailyFx : " + inRead + "\n";
                                     answer += "DailyBot: " + inStrategy + "\n\n";

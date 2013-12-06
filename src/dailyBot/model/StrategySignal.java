@@ -55,7 +55,7 @@ public class StrategySignal extends UniqueIdSignal implements Serializable
         this.strategyId = strategyId;
     }
 
-    public StrategyId getStategyId()
+    public StrategyId getStrategyId()
     {
         return strategyId;
     }

@@ -288,7 +288,7 @@ public enum Pair
         {
             String debug = "";
             for(StrategySignal s : signals)
-                debug += s.getStategyId().toString() + " " + s.getPair().toString() + " " + s.getEntryPrice() + " "
+                debug += s.getStrategyId().toString() + " " + s.getPair().toString() + " " + s.getEntryPrice() + " "
                     + s.isBuy() + " " + s.getLow() + " " + s.getHigh() + "\n";
             return debug;
         }

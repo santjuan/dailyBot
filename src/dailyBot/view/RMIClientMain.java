@@ -14,8 +14,8 @@ import dailyBot.control.DailyLog;
 import dailyBot.control.DailyProperties;
 import dailyBot.control.connection.RMIConnection;
 import dailyBot.control.connection.RMIServerConnection;
-import dailyBot.model.Strategy.StrategyId;
 import dailyBot.model.SignalProvider.SignalProviderId;
+import dailyBot.model.Strategy.StrategyId;
 
 public class RMIClientMain extends JFrame
 {
