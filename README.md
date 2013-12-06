@@ -12,7 +12,7 @@ The connection packages contain classes that help in the connection with DailyFX
 The model packages contain the basic model of DailyBot: a set of StrategySystems own and update several Strategies, which relay some StrategySignals to SignalProviders, which in turn execute them in Brokers, provided their Filters approve them.
 The current system implements the DailyFXStrategySystem, which relay DailyFX signals to a Zulutrade enabled signal provider, which uses an AI filter written in Octave (to learn more about DailyFX you can check this page: http://www.dailyfx.com/, about Zulutrade: http://www.zulutrade.com/ and about the zulutrade API (which is used in this project): https://www.zulutrade.com/restapi-reference).
 
-The view package contain several UIs which can be used to control the system and assist in the process of determining which Strategies should be active for which Forex Pairs. The connection between the UI client and server is done through Java Remote Method Invocation (Java RMI).
+The view package contain several UIs which can be used to control the system and assist in the process of determining which Strategies should be active for which Forex Pairs. The connection between the UI client and server is done through Java Remote Method Invocation (Java RMI), so that the system can be monitored remotely.
 
 About DailyBot:
 
