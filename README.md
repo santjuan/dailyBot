@@ -29,3 +29,5 @@ How to setup:
 
 The project is an Eclipse project. If you correctly fill all the DailyBot.conf properties, it will work without major problems (you might have to correct some permission problems with java.policy and the RMI codebase). In order to use RMI you should first start the rmiregistry. 
 About the database: the system automatically creates the tables (it currently only use 4 tables), so you only need to provide the address and login data for an empty MySql database (see the DailyBot.conf file for details).
+
+Since the system was developed by a single person, I didn't use Javadoc nor commented the code, however I plan to do it in a future version.
