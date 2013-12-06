@@ -24,3 +24,8 @@ ATR: http://en.wikipedia.org/wiki/Average_true_range
 RSI: http://en.wikipedia.org/wiki/Relative_strength_index
 
 The first filter was done manually, so I manually choose for which ranges of the indicators each Forex strategy and currency pair would be active. Then, with the help of a friend (https://github.com/sebasutp), we created an AI system which uses probabilistic models to determine for a particular market condition what is the probability of a trade to be successful. That AI system, which is written in Octave, is the only part of DailyBot which is not public or released here in GitHub.
+
+How to setup:
+
+The project is an Eclipse project. If you correctly fill all the DailyBot.conf properties, it will work without major problems (you might have to correct some permission problems with java.policy and the RMI codebase). In order to use RMI you should first start the rmiregistry. 
+About the database: the system automatically creates the tables (it currently only use 4 tables), so you only need to provide the address and login data for an empty MySql database (see the DailyBot.conf file for details).
