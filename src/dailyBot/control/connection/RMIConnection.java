@@ -18,7 +18,7 @@ public interface RMIConnection extends Remote
     public boolean getOpenSignalProvider(int signalProviderId, int strategyId, int pairId) throws RemoteException;
 
     public void setActiveSignalProvider(int signalProviderId, int strategyId, int pairId, boolean active, boolean open)
-            throws RemoteException;
+        throws RemoteException;
 
     public Filter getFilterSignalProvider(int signalProviderId) throws RemoteException;
 

@@ -45,7 +45,7 @@ public class PairFormat extends JPanel
     {
         GridLayout gridLayout = new GridLayout();
         int filas = (Pair.values().length - 1) % 2 == 0 ? (Pair.values().length - 1) / 2
-                : (Pair.values().length - 1) / 2 + 1;
+            : (Pair.values().length - 1) / 2 + 1;
         gridLayout.setRows(filas);
         gridLayout.setColumns(2);
         this.setLayout(gridLayout);
@@ -125,7 +125,7 @@ public class PairFormat extends JPanel
         try
         {
             nuevo.setSelected(RMIClientMain.connection.getActiveSignalProvider(signalProviderId.ordinal(),
-                    strategyId.ordinal(), p.ordinal()));
+                strategyId.ordinal(), p.ordinal()));
         }
         catch(RemoteException e)
         {
@@ -147,16 +147,17 @@ public class PairFormat extends JPanel
                 {
                     boolean activar = ((AbstractButton) e.getSource()).isSelected();
                     RMIClientMain.connection.setActiveSignalProvider(signalProviderId.ordinal(), strategyId.ordinal(),
-                            par.ordinal(), activar, false);
+                        par.ordinal(), activar, false);
                     if(activar
-                            && RMIClientMain.connection.getOpenSignalProvider(signalProviderId.ordinal(),
-                                    strategyId.ordinal(), par.ordinal()))
+                        && RMIClientMain.connection.getOpenSignalProvider(signalProviderId.ordinal(),
+                            strategyId.ordinal(), par.ordinal()))
                     {
-                        int a = JOptionPane.showConfirmDialog(null, "La senal estaba abierta, desea abrirla nuevamente?",
-                                "Confirmacion", JOptionPane.YES_NO_OPTION);
+                        int a = JOptionPane.showConfirmDialog(null,
+                            "La senal estaba abierta, desea abrirla nuevamente?", "Confirmacion",
+                            JOptionPane.YES_NO_OPTION);
                         boolean abrir = a == JOptionPane.YES_OPTION;
-                        RMIClientMain.connection.setActiveSignalProvider(signalProviderId.ordinal(), strategyId.ordinal(),
-                                par.ordinal(), activar, abrir);
+                        RMIClientMain.connection.setActiveSignalProvider(signalProviderId.ordinal(),
+                            strategyId.ordinal(), par.ordinal(), activar, abrir);
                     }
                 }
                 catch(RemoteException e1)

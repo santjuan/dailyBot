@@ -50,14 +50,15 @@ public class ChatConnection
                             all.addAll(strategyId.strategy().duplicateSignals());
                         String answer = "";
                         answer += "Ultima lectura hace: "
-                                + (System.currentTimeMillis() - DailyFXStrategySystem.lastReadTime.get())
-                                + " millisegundos\n";
+                            + (System.currentTimeMillis() - DailyFXStrategySystem.lastReadTime.get())
+                            + " millisegundos\n";
                         if(signals != null)
                             for(StrategySignal inRead : signals)
                             {
                                 try
                                 {
-                                    StrategySignal inStrategy = inRead.getStategyId().strategy().hasPair(inRead.getPair());
+                                    StrategySignal inStrategy = inRead.getStategyId().strategy()
+                                        .hasPair(inRead.getPair());
                                     answer += "DailyFx : " + inRead + "\n";
                                     answer += "DailyBot: " + inStrategy + "\n\n";
                                     all.remove(inStrategy);
@@ -203,13 +204,13 @@ public class ChatConnection
     };
 
     private static ConnectionConfiguration connectionConfig = new ConnectionConfiguration("talk.google.com", 5222,
-            "gmail.com");
+        "gmail.com");
     private static final AtomicReference<XMPPConnection> xMPPConnection = new AtomicReference<XMPPConnection>();
     private static final String toAddress = DailyProperties
-            .getProperty("dailyBot.control.connection.ChatConnection.emailTo");
+        .getProperty("dailyBot.control.connection.ChatConnection.emailTo");
     private static Chat currentChat;
     private static final String username = DailyProperties
-            .getProperty("dailyBot.control.connection.ChatConnection.emailFrom");
+        .getProperty("dailyBot.control.connection.ChatConnection.emailFrom");
     private static final AtomicLong connectionCount = new AtomicLong();
     private static final AtomicLong lastConnection = new AtomicLong();
 
@@ -219,7 +220,7 @@ public class ChatConnection
         try
         {
             if((System.currentTimeMillis() - lastConnection.get() >= 60L * 60L * 1000L) || xMPPConnection.get() == null
-                    || !xMPPConnection.get().isConnected() || ((connectionCount.incrementAndGet() % 120) == 0))
+                || !xMPPConnection.get().isConnected() || ((connectionCount.incrementAndGet() % 120) == 0))
             {
                 lastConnection.set(System.currentTimeMillis());
                 if(xMPPConnection.get() != null)
@@ -237,7 +238,7 @@ public class ChatConnection
                 xMPPConnection.set(new XMPPConnection(connectionConfig));
                 xMPPConnection.get().connect();
                 xMPPConnection.get().login(username,
-                        DailyProperties.getProperty("dailyBot.control.connection.ChatConnection.emailFromPassword"));
+                    DailyProperties.getProperty("dailyBot.control.connection.ChatConnection.emailFromPassword"));
                 xMPPConnection.get().getChatManager().addChatListener(new ChatManagerListener()
                 {
                     @Override

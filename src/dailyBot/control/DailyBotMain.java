@@ -68,7 +68,8 @@ public class DailyBotMain
                 }
                 catch(RuntimeException e)
                 {
-                    DailyThreadInfo.registerUpdate("SSI updater", "State", "exception loading: " + e + " " + e.getMessage());
+                    DailyThreadInfo.registerUpdate("SSI updater", "State",
+                        "exception loading: " + e + " " + e.getMessage());
                     throw e;
                 }
                 finally
@@ -117,7 +118,7 @@ public class DailyBotMain
                         catch(RuntimeException e)
                         {
                             DailyThreadInfo.registerUpdate("VIX updater", "State",
-                                    "error loading: " + e + " " + e.getMessage());
+                                "error loading: " + e + " " + e.getMessage());
                             throw e;
                         }
                         finally
@@ -131,7 +132,7 @@ public class DailyBotMain
                     {
                         DailyLog.logError("Error en el hilo monitor de ConexionServidor " + e + " " + e.getMessage());
                         DailyThreadInfo.registerUpdate("SSI-VIX updater", "State",
-                                "error in loop: " + e + " " + e.getMessage());
+                            "error in loop: " + e + " " + e.getMessage());
                         DailyThreadInfo.closeThreadLoop("SSI-VIX updater");
                     }
                     setLastUpdate(System.currentTimeMillis());
@@ -157,12 +158,13 @@ public class DailyBotMain
                             try
                             {
                                 pair.processSignals();
-                                DailyThreadInfo.registerUpdate("Pair high-low monitor", "State", "pair updated: " + pair);
+                                DailyThreadInfo.registerUpdate("Pair high-low monitor", "State", "pair updated: "
+                                    + pair);
                             }
                             catch(RuntimeException e)
                             {
-                                DailyThreadInfo.registerUpdate("Pair high-low monitor", "State", "error updating pair: "
-                                        + pair + ", " + e + " " + e.getMessage());
+                                DailyThreadInfo.registerUpdate("Pair high-low monitor", "State",
+                                    "error updating pair: " + pair + ", " + e + " " + e.getMessage());
                                 throw e;
                             }
                         }
@@ -171,8 +173,8 @@ public class DailyBotMain
                     catch(Exception e)
                     {
                         DailyLog.logError("Error en el monitor de pares " + e + " " + e.getMessage());
-                        DailyThreadInfo.registerUpdate("Pair high-low monitor", "State", "error updating pairs: " + e + " "
-                                + e.getMessage());
+                        DailyThreadInfo.registerUpdate("Pair high-low monitor", "State", "error updating pairs: " + e
+                            + " " + e.getMessage());
                     }
                     finally
                     {
@@ -204,7 +206,7 @@ public class DailyBotMain
                     {
                         DailyLog.logError("Error en el monitor del chat " + e.getMessage());
                         DailyThreadInfo.registerUpdate("Chat ping", "State",
-                                "error sending ping " + e + " " + e.getMessage());
+                            "error sending ping " + e + " " + e.getMessage());
                     }
                     finally
                     {
@@ -250,9 +252,9 @@ public class DailyBotMain
     public static void loadProperties()
     {
         System.setProperty("java.rmi.server.codebase",
-                "file:" + DailyProperties.getProperty("dailyBot.control.DailyBotMain.dailyBotFolder") + "/bin/");
+            "file:" + DailyProperties.getProperty("dailyBot.control.DailyBotMain.dailyBotFolder") + "/bin/");
         System.setProperty("java.security.policy",
-                "file:" + DailyProperties.getProperty("dailyBot.control.DailyBotMain.dailyBotFolder") + "/server.policy");
+            "file:" + DailyProperties.getProperty("dailyBot.control.DailyBotMain.dailyBotFolder") + "/server.policy");
     }
 
     public static boolean marketClosed()
@@ -260,7 +262,8 @@ public class DailyBotMain
         Calendar calendar = Calendar.getInstance();
         int day = calendar.get(Calendar.DAY_OF_WEEK);
         int hour = calendar.get(Calendar.HOUR_OF_DAY);
-        return (day == Calendar.FRIDAY && hour > 16) || (day == Calendar.SATURDAY) || (day == Calendar.SUNDAY && hour <= 16);
+        return (day == Calendar.FRIDAY && hour > 16) || (day == Calendar.SATURDAY)
+            || (day == Calendar.SUNDAY && hour <= 16);
     }
 
     public static volatile boolean inLinux = true;
@@ -292,9 +295,9 @@ public class DailyBotMain
         Calendar current = Calendar.getInstance();
         DailyLog.acummulateLog();
         DailyLog.logInfo("Iniciando operaciones automaticamente: " + current.get(Calendar.DAY_OF_MONTH) + "/"
-                + (current.get(Calendar.MONTH) + 1) + "/" + current.get(Calendar.YEAR) + " "
-                + current.get(Calendar.HOUR_OF_DAY) + ":" + current.get(Calendar.MINUTE) + ":"
-                + current.get(Calendar.SECOND) + "." + current.get(Calendar.MILLISECOND));
+            + (current.get(Calendar.MONTH) + 1) + "/" + current.get(Calendar.YEAR) + " "
+            + current.get(Calendar.HOUR_OF_DAY) + ":" + current.get(Calendar.MINUTE) + ":"
+            + current.get(Calendar.SECOND) + "." + current.get(Calendar.MILLISECOND));
         loadProperties();
         if(inLinux)
         {
@@ -307,7 +310,7 @@ public class DailyBotMain
                     RMIServerConnection connection = new RMIServerConnection();
                     RMIConnection stub = (RMIConnection) UnicastRemoteObject.exportObject(connection, 0);
                     Registry registry = LocateRegistry.getRegistry(DailyProperties
-                            .getProperty("dailyBot.vista.VentanaPrincipal.direccionRMI"));
+                        .getProperty("dailyBot.vista.VentanaPrincipal.direccionRMI"));
                     registry.rebind(name, stub);
                     DailyThreadInfo.registerUpdate("initial thread", "RMI state", "RMI connection ok");
                 }

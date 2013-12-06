@@ -20,11 +20,11 @@ public class EmailConnection
 {
     private static final String SMTP_HOST_NAME = "gmail-smtp.l.google.com";
     private static final String username = DailyProperties
-            .getProperty("dailyBot.control.connection.EmailConnection.emailFrom");
+        .getProperty("dailyBot.control.connection.EmailConnection.emailFrom");
     private static final String emailFromAddress = DailyProperties
-            .getProperty("dailyBot.control.connection.EmailConnection.emailFrom");
+        .getProperty("dailyBot.control.connection.EmailConnection.emailFrom");
     private static final String[] emailList = { DailyProperties
-            .getProperty("dailyBot.control.connection.EmailConnection.emailTo") };
+        .getProperty("dailyBot.control.connection.EmailConnection.emailTo") };
     private static final Session session = loadSession();
     private static final ExecutorService executor = Executors.newFixedThreadPool(1);
 
@@ -41,7 +41,7 @@ public class EmailConnection
             public PasswordAuthentication getPasswordAuthentication()
             {
                 return new PasswordAuthentication(username, DailyProperties
-                        .getProperty("dailyBot.control.connection.EmailConnection.emailFromPassword"));
+                    .getProperty("dailyBot.control.connection.EmailConnection.emailFromPassword"));
             }
         });
         return session;

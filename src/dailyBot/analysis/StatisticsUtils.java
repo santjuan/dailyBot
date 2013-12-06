@@ -54,9 +54,9 @@ public class StatisticsUtils
                 continue;
             }
             values.add(Math.max(
-                    (actual.high - actual.low) * pair.pairMultiplier(),
-                    Math.max(Math.abs(actual.high - lastClose) * pair.pairMultiplier(), Math.abs(actual.low - lastClose)
-                            * pair.pairMultiplier())));
+                (actual.high - actual.low) * pair.pairMultiplier(),
+                Math.max(Math.abs(actual.high - lastClose) * pair.pairMultiplier(), Math.abs(actual.low - lastClose)
+                    * pair.pairMultiplier())));
             lastClose = actual.close;
         }
         return StatisticsUtils.calculateEMA(values, period);

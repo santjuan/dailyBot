@@ -31,7 +31,8 @@ public class HistoricChart extends JFrame
     private List<SignalHistoryRecord> records;
     private SignalProviderId signalProviderId;
 
-    public HistoricChart(Filter filter, List<SignalHistoryRecord> records, String title, SignalProviderId signalProviderId)
+    public HistoricChart(Filter filter, List<SignalHistoryRecord> records, String title,
+        SignalProviderId signalProviderId)
     {
         super(title);
         this.filter = filter;
@@ -78,7 +79,8 @@ public class HistoricChart extends JFrame
                 if(temp.get(Calendar.MONTH) != actual.get(Calendar.MONTH))
                 {
                     if(cuentaActual != 0 && actual.get(Calendar.YEAR) >= 2012)
-                        cdts.addValue(acumuladoActual, "", monthAsString(actual) + "-" + (actual.get(Calendar.YEAR) - 2000));
+                        cdts.addValue(acumuladoActual, "", monthAsString(actual) + "-"
+                            + (actual.get(Calendar.YEAR) - 2000));
                     actual = Calendar.getInstance();
                     actual.setTimeInMillis(temp.getTimeInMillis());
                     acumuladoActual = registro.profit;
@@ -93,7 +95,7 @@ public class HistoricChart extends JFrame
         }
         cdts.addValue(acumuladoActual, "", monthAsString(actual) + " " + actual.get(Calendar.YEAR));
         return ChartFactory.createBarChart("Ganancia atravez del tiempo", "Tiempo", "Ganancia", cdts,
-                PlotOrientation.VERTICAL, false, false, false);
+            PlotOrientation.VERTICAL, false, false, false);
     }
 
     public JFreeChart getPipsAverageChart()
@@ -112,7 +114,7 @@ public class HistoricChart extends JFrame
         }
         XYSeriesCollection xySeriesCollection = new XYSeriesCollection(series);
         return ChartFactory.createXYAreaChart("Promedio Pips vs Tiempo", "Tiempo", "Promedio pips", xySeriesCollection,
-                PlotOrientation.VERTICAL, false, false, false);
+            PlotOrientation.VERTICAL, false, false, false);
     }
 
     public void updateCharts()

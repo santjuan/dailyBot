@@ -84,11 +84,11 @@ public class MySqlConnection
     }
 
     private static final String createTableSignalHistoryRecord = "CREATE TABLE IF NOT EXISTS SignalHistoryRecord ("
-            + "Id int(11) NOT NULL AUTO_INCREMENT, " + "StrategyId tinyint(4) NOT NULL, " + "CloseDate datetime NOT NULL, "
-            + "Pair tinyint(4) NOT NULL, " + "Profit smallint(6) NOT NULL, " + "VIX double NOT NULL, "
-            + "SSI1 double NOT NULL, " + "SSI2 double NOT NULL, " + "IsBuy tinyint(1) NOT NULL DEFAULT '1', "
-            + "OpenDate datetime NOT NULL, " + "High smallint(6) NOT NULL DEFAULT '-32768', "
-            + "Low smallint(6) NOT NULL DEFAULT '32767', " + "PRIMARY KEY (Id)" + ")";
+        + "Id int(11) NOT NULL AUTO_INCREMENT, " + "StrategyId tinyint(4) NOT NULL, " + "CloseDate datetime NOT NULL, "
+        + "Pair tinyint(4) NOT NULL, " + "Profit smallint(6) NOT NULL, " + "VIX double NOT NULL, "
+        + "SSI1 double NOT NULL, " + "SSI2 double NOT NULL, " + "IsBuy tinyint(1) NOT NULL DEFAULT '1', "
+        + "OpenDate datetime NOT NULL, " + "High smallint(6) NOT NULL DEFAULT '-32768', "
+        + "Low smallint(6) NOT NULL DEFAULT '32767', " + "PRIMARY KEY (Id)" + ")";
 
     private static final AtomicBoolean signalHistoryRecordCreated = new AtomicBoolean();
 
@@ -113,7 +113,7 @@ public class MySqlConnection
             if(profit > 2000)
             {
                 DailyLog.logError("Entrada sospechosa: " + strategyId.name() + ", " + signal.getPair().name() + ", "
-                        + dateLong + ", ganancia: " + profit + "?");
+                    + dateLong + ", ganancia: " + profit + "?");
                 return;
             }
             double VIX = signal.getVIX();
@@ -125,29 +125,29 @@ public class MySqlConnection
                 statement = connection.createStatement();
                 statement.setQueryTimeout(60);
                 statement
-                        .executeUpdate("INSERT SignalHistoryRecord (StrategyId,CloseDate,Pair,Profit,VIX,SSI1,SSI2,IsBuy,OpenDate,High,Low) VALUES("
-                                + strategyId.ordinal()
-                                + ","
-                                + formatDate(dateLong)
-                                + ","
-                                + signal.getPair().ordinal()
-                                + ","
-                                + profit
-                                + ","
-                                + VIX
-                                + ","
-                                + SSI1
-                                + ","
-                                + SSI2
-                                + ","
-                                + (signal.isBuy() ? 1 : 0)
-                                + ","
-                                + formatDate(signal.getStartDate()) + "," + signal.getHigh() + "," + signal.getLow() + ")");
+                    .executeUpdate("INSERT SignalHistoryRecord (StrategyId,CloseDate,Pair,Profit,VIX,SSI1,SSI2,IsBuy,OpenDate,High,Low) VALUES("
+                        + strategyId.ordinal()
+                        + ","
+                        + formatDate(dateLong)
+                        + ","
+                        + signal.getPair().ordinal()
+                        + ","
+                        + profit
+                        + ","
+                        + VIX
+                        + ","
+                        + SSI1
+                        + ","
+                        + SSI2
+                        + ","
+                        + (signal.isBuy() ? 1 : 0)
+                        + ","
+                        + formatDate(signal.getStartDate()) + "," + signal.getHigh() + "," + signal.getLow() + ")");
             }
             catch(SQLException s)
             {
                 DailyLog.logError("Error escribiendo a la base de datos: " + strategyId.toString() + ", "
-                        + signal.getPair().toString() + ", " + dateLong + ", " + profit);
+                    + signal.getPair().toString() + ", " + dateLong + ", " + profit);
                 try
                 {
                     connection.close();
@@ -169,8 +169,8 @@ public class MySqlConnection
     }
 
     private static final String createTableATR = "CREATE TABLE IF NOT EXISTS ATR (" + "Pair tinyint(4) NOT NULL, "
-            + "Date date NOT NULL, " + "Open double NOT NULL, " + "Close double NOT NULL, " + "Low double NOT NULL, "
-            + "High double NOT NULL, " + "PRIMARY KEY (Pair, Date) USING BTREE" + ")";
+        + "Date date NOT NULL, " + "Open double NOT NULL, " + "Close double NOT NULL, " + "Low double NOT NULL, "
+        + "High double NOT NULL, " + "PRIMARY KEY (Pair, Date) USING BTREE" + ")";
 
     private static final AtomicBoolean ATRCreated = new AtomicBoolean();
 
@@ -195,7 +195,7 @@ public class MySqlConnection
             statement.setQueryTimeout(60);
             statement.executeUpdate("delete from ATR where Pair=" + pair.ordinal() + " and Date='" + date + "'");
             statement.executeUpdate("INSERT ATR (Pair,Date,Open,Close,Low,High) VALUES(" + pair.ordinal() + ",'" + date
-                    + "'," + open + "," + close + "," + low + "," + high + ")");
+                + "'," + open + "," + close + "," + low + "," + high + ")");
         }
         catch(SQLException s)
         {
@@ -220,7 +220,8 @@ public class MySqlConnection
     {
         Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         String date = formatDate(calendar);
-        if(calendar.get(Calendar.DAY_OF_WEEK) != Calendar.SUNDAY && calendar.get(Calendar.DAY_OF_WEEK) != Calendar.SATURDAY)
+        if(calendar.get(Calendar.DAY_OF_WEEK) != Calendar.SUNDAY
+            && calendar.get(Calendar.DAY_OF_WEEK) != Calendar.SATURDAY)
             addPairData(pair, date, open, close, low, high);
     }
 
@@ -234,14 +235,14 @@ public class MySqlConnection
         {
             statement = connection.createStatement();
             statement.setQueryTimeout(60);
-            resultSet = statement.executeQuery("select * from ATR where Pair=" + pair.ordinal() + " and Date='" + dateString
-                    + "'");
+            resultSet = statement.executeQuery("select * from ATR where Pair=" + pair.ordinal() + " and Date='"
+                + dateString + "'");
             if(resultSet.next())
-                return new double[] { resultSet.getDouble("Low"), resultSet.getDouble("High"), resultSet.getDouble("Open"),
-                        resultSet.getDouble("Close") };
+                return new double[] { resultSet.getDouble("Low"), resultSet.getDouble("High"),
+                    resultSet.getDouble("Open"), resultSet.getDouble("Close") };
             else
                 return new double[] { Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY,
-                        Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY };
+                    Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY };
         }
         catch(SQLException s)
         {
@@ -288,9 +289,9 @@ public class MySqlConnection
                     temp.setTime(date);
                     temp.set(Calendar.HOUR_OF_DAY, 19);
                     cache.get(Pair.values()[resultSet.getInt("Pair")]).put(
-                            temp.getTime(),
-                            new PairHistory(resultSet.getDate("Date"), resultSet.getDouble("Low"), resultSet
-                                    .getDouble("High"), resultSet.getDouble("Open"), resultSet.getDouble("Close")));
+                        temp.getTime(),
+                        new PairHistory(resultSet.getDate("Date"), resultSet.getDouble("Low"), resultSet
+                            .getDouble("High"), resultSet.getDouble("Open"), resultSet.getDouble("Close")));
                 }
             }
             catch(SQLException s)
@@ -435,11 +436,11 @@ public class MySqlConnection
             resultSet = statement.executeQuery("select * from SignalHistoryRecord");
             LinkedList<SignalHistoryRecord> newEntries = new LinkedList<SignalHistoryRecord>();
             while(resultSet.next())
-                newEntries.add(new SignalHistoryRecord(StrategyId.values()[resultSet.getInt("StrategyId")],
-                        Pair.values()[resultSet.getInt("Pair")], resultSet.getInt("IsBuy") == 1, resultSet.getTimestamp(
-                                "OpenDate").getTime(), resultSet.getTimestamp("CloseDate").getTime(), resultSet
-                                .getInt("Profit"), resultSet.getDouble("VIX"), resultSet.getDouble("SSI1"), resultSet
-                                .getDouble("SSI2"), resultSet.getInt("Low"), resultSet.getInt("High")));
+                newEntries.add(new SignalHistoryRecord(StrategyId.values()[resultSet.getInt("StrategyId")], Pair
+                    .values()[resultSet.getInt("Pair")], resultSet.getInt("IsBuy") == 1, resultSet.getTimestamp(
+                    "OpenDate").getTime(), resultSet.getTimestamp("CloseDate").getTime(), resultSet.getInt("Profit"),
+                    resultSet.getDouble("VIX"), resultSet.getDouble("SSI1"), resultSet.getDouble("SSI2"), resultSet
+                        .getInt("Low"), resultSet.getInt("High")));
             Collections.sort(newEntries);
             return newEntries;
         }
@@ -466,7 +467,8 @@ public class MySqlConnection
 
     private static Connection newConnection()
     {
-        String dbConnectionString = DailyProperties.getProperty("dailyBot.control.connection.MySqlConnection.DBAddress");
+        String dbConnectionString = DailyProperties
+            .getProperty("dailyBot.control.connection.MySqlConnection.DBAddress");
         String dbUserId = DailyProperties.getProperty("dailyBot.control.connection.MySqlConnection.DBUsername");
         String dbPassword = DailyProperties.getProperty("dailyBot.control.connection.MySqlConnection.DBPassword");
         for(int intento = 0; intento < 11; intento++)
@@ -497,7 +499,7 @@ public class MySqlConnection
     {
         LinkedBlockingQueue<Connection> newPool = new LinkedBlockingQueue<Connection>();
         int connectionNumber = Integer.parseInt(DailyProperties
-                .getProperty("dailyBot.control.connection.MySqlConnection.DBNumberOfConnections"));
+            .getProperty("dailyBot.control.connection.MySqlConnection.DBNumberOfConnections"));
         for(int i = 0; i < connectionNumber; i++)
             try
             {
@@ -542,7 +544,8 @@ public class MySqlConnection
                 {
                     if(possible == null || exception == true)
                     {
-                        DailyLog.logError("No se pudo obtener una conexion de la base de datos en 60 segundos, reiniciando");
+                        DailyLog
+                            .logError("No se pudo obtener una conexion de la base de datos en 60 segundos, reiniciando");
                         DailyLog.tryInmediateReboot();
                     }
                 }

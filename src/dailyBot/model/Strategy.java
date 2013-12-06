@@ -52,7 +52,7 @@ public class Strategy extends XMLPersistentObject
     }
 
     public void processSignalChange(Pair pair, boolean hit, boolean buy, int lotNumber, double entryPrice,
-            StrategySignal affected)
+        StrategySignal affected)
     {
         write.lock();
         try
@@ -101,8 +101,8 @@ public class Strategy extends XMLPersistentObject
                 if(affected.isBuy())
                 {
                     if((affected.getPair().getCurrentPrice(true) < affected.getStop())
-                            && (affected.getPair().getCurrentPrice(false) < affected.getStop())
-                            && ((affected.getLotNumber() < 4) || (affected.getStop() > affected.stopDaily())))
+                        && (affected.getPair().getCurrentPrice(false) < affected.getStop())
+                        && ((affected.getLotNumber() < 4) || (affected.getStop() > affected.stopDaily())))
                     {
                         if(!affected.isStopTouched())
                         {
@@ -116,8 +116,8 @@ public class Strategy extends XMLPersistentObject
                 else
                 {
                     if((affected.getPair().getCurrentPrice(false) > affected.getStop())
-                            && (affected.getPair().getCurrentPrice(true) > affected.getStop())
-                            && ((affected.getLotNumber() < 4) || (affected.getStop() < affected.stopDaily())))
+                        && (affected.getPair().getCurrentPrice(true) > affected.getStop())
+                        && ((affected.getLotNumber() < 4) || (affected.getStop() < affected.stopDaily())))
                     {
                         if(!affected.isStopTouched())
                         {

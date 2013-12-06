@@ -27,9 +27,9 @@ public class OctaveFilter extends ExternalProcessFilter
     public void startFilter(SignalProviderId id)
     {
         this.percentage = Double.parseDouble(DailyProperties.getProperty("dailyBot.model.dailyFx.OctaveFilter."
-                + id.toString() + ".percentage"));
+            + id.toString() + ".percentage"));
         this.pips = Integer.parseInt(DailyProperties.getProperty("dailyBot.model.dailyFx.OctaveFilter." + id.toString()
-                + ".pips"));
+            + ".pips"));
         super.startFilter(id);
     }
 
@@ -62,8 +62,8 @@ public class OctaveFilter extends ExternalProcessFilter
             for(SignalHistoryRecord currentRecord : list)
             {
                 if((currentTime - currentRecord.openDate) <= (12L * 30L * 24L * 60L * 60L * 1000L)
-                        && currentRecord.id.equals(record.id) && currentRecord.pair.equals(record.pair)
-                        && (currentRecord.buy == record.buy))
+                    && currentRecord.id.equals(record.id) && currentRecord.pair.equals(record.pair)
+                    && (currentRecord.buy == record.buy))
                 {
                     vix = currentRecord.VIX;
                     ssi = Utils.getSSI(currentRecord);
@@ -100,7 +100,7 @@ public class OctaveFilter extends ExternalProcessFilter
     }
 
     public static synchronized String process(SignalHistoryRecord record, double percentage, int pips,
-            TreeMap<SignalHistoryRecord, Boolean> map)
+        TreeMap<SignalHistoryRecord, Boolean> map)
     {
         if(!RMIClientMain.server)
             return "";
@@ -108,7 +108,7 @@ public class OctaveFilter extends ExternalProcessFilter
         try
         {
             Process process = Runtime.getRuntime().exec(
-                    DailyProperties.getProperty("dailyBot.model.dailyFx.OctaveFilter.command"));
+                DailyProperties.getProperty("dailyBot.model.dailyFx.OctaveFilter.command"));
             process.waitFor();
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String firstOutput = bufferedReader.readLine().trim();

@@ -38,23 +38,23 @@ public class InfoPanel extends JPanel
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         setLayout(layout);
         layout.setHorizontalGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addGroup(
-                layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(
-                                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(deviation).addComponent(deviationLabel)
-                                        .addComponent(transactionNumber).addComponent(transactionNumberLabel)
-                                        .addComponent(pipsAverage).addComponent(pipsAverageLabel).addComponent(profit)
-                                        .addComponent(profitLabel))
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)));
+            layout
+                .createSequentialGroup()
+                .addContainerGap()
+                .addGroup(
+                    layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addComponent(deviation)
+                        .addComponent(deviationLabel).addComponent(transactionNumber)
+                        .addComponent(transactionNumberLabel).addComponent(pipsAverage).addComponent(pipsAverageLabel)
+                        .addComponent(profit).addComponent(profitLabel))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)));
         layout.setVerticalGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addGroup(
-                layout.createSequentialGroup().addGap(100, 100, 100).addComponent(profitLabel).addGap(12, 12, 12)
-                        .addComponent(profit).addGap(18, 18, 18).addComponent(pipsAverageLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED).addComponent(pipsAverage)
-                        .addGap(18, 18, 18).addComponent(transactionNumberLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(transactionNumber).addGap(18, 18, 18).addComponent(deviationLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED).addComponent(deviation)));
+            layout.createSequentialGroup().addGap(100, 100, 100).addComponent(profitLabel).addGap(12, 12, 12)
+                .addComponent(profit).addGap(18, 18, 18).addComponent(pipsAverageLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED).addComponent(pipsAverage)
+                .addGap(18, 18, 18).addComponent(transactionNumberLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED).addComponent(transactionNumber)
+                .addGap(18, 18, 18).addComponent(deviationLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED).addComponent(deviation)));
     }
 
     public static void main(String[] args)

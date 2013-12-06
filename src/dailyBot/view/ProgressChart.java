@@ -61,8 +61,8 @@ public class ProgressChart extends JPanel
             try
             {
                 if(signalProviderId != null
-                        && RMIClientMain.connection.getActiveSignalProvider(signalProviderId.ordinal(), r.id.ordinal(),
-                                r.pair.ordinal()) && ((actual - r.openDate) <= (12L * 30L * 24L * 60L * 60L * 1000L)))
+                    && RMIClientMain.connection.getActiveSignalProvider(signalProviderId.ordinal(), r.id.ordinal(),
+                        r.pair.ordinal()) && ((actual - r.openDate) <= (12L * 30L * 24L * 60L * 60L * 1000L)))
                     totalTransacciones++;
                 else
                     continue;
@@ -89,15 +89,17 @@ public class ProgressChart extends JPanel
         NumberFormat df = DecimalFormat.getNumberInstance();
         df.setMaximumFractionDigits(4);
         info.pipsAverage.setText(df.format(media));
-        int porcentaje = (int) (((nTransacciones + 0.0d) / ((signalProviderId == null ? records.size() : totalTransacciones))) * 100);
-        String espacios = nTransacciones < 10 ? "    " : nTransacciones < 100 ? "   " : nTransacciones < 1000 ? "  " : " ";
+        int porcentaje = (int) (((nTransacciones + 0.0d) / ((signalProviderId == null ? records.size()
+            : totalTransacciones))) * 100);
+        String espacios = nTransacciones < 10 ? "    " : nTransacciones < 100 ? "   " : nTransacciones < 1000 ? "  "
+            : " ";
         String espaciosA = espacios;
         espacios += "( " + (porcentaje == 100 ? "" : " ") + porcentaje + "%  )";
         info.transactionNumber.setText(espaciosA + nTransacciones + " / " + totalTransacciones);
         info.deviation.setText(df.format(desviacionD));
         XYSeriesCollection xySeriesCollection = new XYSeriesCollection(series);
-        JFreeChart chart = ChartFactory.createXYAreaChart("Ganancia vs tiempo", "Ganancia", "Tiempo", xySeriesCollection,
-                PlotOrientation.VERTICAL, false, false, false);
+        JFreeChart chart = ChartFactory.createXYAreaChart("Ganancia vs tiempo", "Ganancia", "Tiempo",
+            xySeriesCollection, PlotOrientation.VERTICAL, false, false, false);
         label.setIcon(new ImageIcon(chart.createBufferedImage(600, 350)));
     }
 

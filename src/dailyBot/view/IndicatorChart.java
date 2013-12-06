@@ -65,7 +65,7 @@ public class IndicatorChart extends JPanel
             if(unico)
             {
                 if(range.isInside(indicator.calculate(r), r.buy)
-                        || (numero == 2 && range.isInside(indicator.calculate(r), !r.buy)))
+                    || (numero == 2 && range.isInside(indicator.calculate(r), !r.buy)))
                 {
                     nTransacciones++;
                     acum += r.profit;
@@ -106,15 +106,16 @@ public class IndicatorChart extends JPanel
         df.setMaximumFractionDigits(4);
         info.pipsAverage.setText(df.format(media));
         int porcentaje = (int) (((nTransacciones + 0.0d) / records.size()) * 100);
-        String espacios = nTransacciones < 10 ? "    " : nTransacciones < 100 ? "   " : nTransacciones < 1000 ? "  " : " ";
+        String espacios = nTransacciones < 10 ? "    " : nTransacciones < 100 ? "   " : nTransacciones < 1000 ? "  "
+            : " ";
         String espaciosA = espacios;
         espacios += "( " + (porcentaje == 100 ? "" : " ") + porcentaje + "%  )";
         info.transactionNumber.setText(espaciosA + nTransacciones + espacios);
         info.deviation.setText(df.format(desviacionD));
         dataset.addSeries(seriesDentro);
         dataset.addSeries(seriesFuera);
-        JFreeChart chart = ChartFactory.createScatterPlot(indicator + " vs Ganancia ", indicator.toString(), "Ganancia",
-                dataset, PlotOrientation.VERTICAL, false, false, false);
+        JFreeChart chart = ChartFactory.createScatterPlot(indicator + " vs Ganancia ", indicator.toString(),
+            "Ganancia", dataset, PlotOrientation.VERTICAL, false, false, false);
         XYPlot xyplot = chart.getXYPlot();
         Paint gradientpaint = new Color(0.0f, 0.0f, 0.0f, 1.0f);
         double delta = (indicator.getRange().getMaxBuy() - indicator.getRange().getMinBuy()) / 1000;

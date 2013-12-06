@@ -98,7 +98,7 @@ public class RMIClientMain extends JFrame
         {
             String name = "Conexion";
             Registry registry = LocateRegistry.getRegistry(DailyProperties
-                    .getProperty("dailyBot.view.RMIClientMain.RMIAddress"));
+                .getProperty("dailyBot.view.RMIClientMain.RMIAddress"));
             connection = new RMIServerConnection.Local((RMIConnection) registry.lookup(name));
         }
         catch(Exception e)

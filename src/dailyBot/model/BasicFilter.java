@@ -25,8 +25,8 @@ public class BasicFilter extends Filter
         try
         {
             if(RMIClientMain.connection != null
-                    && !RMIClientMain.connection.getActiveSignalProvider(id.ordinal(), record.id.ordinal(),
-                            record.pair.ordinal()))
+                && !RMIClientMain.connection.getActiveSignalProvider(id.ordinal(), record.id.ordinal(),
+                    record.pair.ordinal()))
                 return false;
             if(RMIClientMain.connection == null && !isActive(record.id, record.pair))
                 return false;

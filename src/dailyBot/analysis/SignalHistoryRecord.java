@@ -58,8 +58,8 @@ public class SignalHistoryRecord implements Comparable<SignalHistoryRecord>, Ser
             RSI = 100 - RSI;
     }
 
-    public SignalHistoryRecord(StrategyId id, Pair pair, boolean buy, long openDate, long closeDate, int profit, double vIX,
-            double sSI1, double sSI2, int low, int high)
+    public SignalHistoryRecord(StrategyId id, Pair pair, boolean buy, long openDate, long closeDate, int profit,
+        double vIX, double sSI1, double sSI2, int low, int high)
     {
         this.id = id;
         this.pair = pair;
@@ -110,7 +110,7 @@ public class SignalHistoryRecord implements Comparable<SignalHistoryRecord>, Ser
     @Override
     public String toString()
     {
-        return "ATR = " + ATR + ", RSI = " + RSI + ", SSI1 = " + SSI1 + ", SSI2 = " + SSI2 + ", VIX = " + VIX + ", par = "
-                + pair + ", compra = " + buy;
+        return "ATR = " + ATR + ", RSI = " + RSI + ", SSI1 = " + SSI1 + ", SSI2 = " + SSI2 + ", VIX = " + VIX
+            + ", par = " + pair + ", compra = " + buy;
     }
 }

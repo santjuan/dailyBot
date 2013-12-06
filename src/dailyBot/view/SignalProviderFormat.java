@@ -29,16 +29,18 @@ public class SignalProviderFormat extends JFrame
             filtro = null;
         }
         ProgressChart graficaProgreso = new ProgressChart(filtro, Utils.getRecords(), signalProviderId);
-        new DailyWindow(signalProviderId.toString(), new Dimension(700, 600), new Object[][] { { graficaProgreso, null } });
+        new DailyWindow(signalProviderId.toString(), new Dimension(700, 600),
+            new Object[][] { { graficaProgreso, null } });
         HistoricChart graficaHistorial = new HistoricChart(filtro, Utils.getRecords(), signalProviderId.toString(),
-                signalProviderId);
+            signalProviderId);
         JTabbedPane jtp = new JTabbedPane();
         JCheckBox botonActivo = null;
         for(StrategyId id1 : StrategyId.values())
         {
             if(id1 != StrategyId.JOEL && id1 != StrategyId.TECHNICAL)
             {
-                PairFormat actual = new PairFormat(signalProviderId, id1, graficaProgreso, graficaHistorial, botonActivo);
+                PairFormat actual = new PairFormat(signalProviderId, id1, graficaProgreso, graficaHistorial,
+                    botonActivo);
                 if(id1.equals(StrategyId.values()[0]))
                     botonActivo = (JCheckBox) actual.darBotonActivo();
                 jtp.addTab(id1.toString(), actual);

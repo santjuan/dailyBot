@@ -21,8 +21,8 @@ public class SignalProviderRanges extends Ranges
         try
         {
             if(id == null
-                    || RMIClientMain.connection.getActiveSignalProvider(id.ordinal(), record.id.ordinal(),
-                            record.pair.ordinal()))
+                || RMIClientMain.connection.getActiveSignalProvider(id.ordinal(), record.id.ordinal(),
+                    record.pair.ordinal()))
                 return RMIClientMain.connection.getFilterSignalProvider(id.ordinal()).filter(record, true, "", id);
             else
                 return false;

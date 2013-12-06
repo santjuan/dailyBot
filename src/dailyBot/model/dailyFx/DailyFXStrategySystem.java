@@ -30,8 +30,8 @@ public class DailyFXStrategySystem extends StrategySystem
 
     public DailyFXStrategySystem()
     {
-        strategies = new StrategyId[] { StrategyId.BREAKOUT1, StrategyId.BREAKOUT2, StrategyId.RANGE1, StrategyId.RANGE2,
-                StrategyId.MOMENTUM1, StrategyId.MOMENTUM2 };
+        strategies = new StrategyId[] { StrategyId.BREAKOUT1, StrategyId.BREAKOUT2, StrategyId.RANGE1,
+            StrategyId.RANGE2, StrategyId.MOMENTUM1, StrategyId.MOMENTUM2 };
     }
 
     @Override
@@ -68,7 +68,7 @@ public class DailyFXStrategySystem extends StrategySystem
                                 DailyLog.acummulateLog();
                                 if(DailyBotMain.inLinux)
                                     Runtime.getRuntime().exec(
-                                            DailyProperties.getProperty("dailyBot.control.DailyBotMain.startCommand"));
+                                        DailyProperties.getProperty("dailyBot.control.DailyBotMain.startCommand"));
                                 onLoop = true;
                             }
                             DailyThread.sleep(300000L);
@@ -109,8 +109,8 @@ public class DailyFXStrategySystem extends StrategySystem
                         try
                         {
                             System.gc();
-                            DailyThreadInfo.registerUpdate("DailyFX updater", "State",
-                                    "error processing " + e + " " + e.getMessage());
+                            DailyThreadInfo.registerUpdate("DailyFX updater", "State", "error processing " + e + " "
+                                + e.getMessage());
                             errorCount++;
                             DailyLog.logError(e.getMessage() + " Error en el ciclo dailyFX");
                             DailyThread.sleep(60000);
@@ -151,7 +151,7 @@ public class DailyFXStrategySystem extends StrategySystem
                     catch(RuntimeException e)
                     {
                         DailyThreadInfo.registerUpdate("DailyFX persistence", "State",
-                                "error storing " + e + " " + e.getMessage());
+                            "error storing " + e + " " + e.getMessage());
                         throw e;
                     }
                     finally
@@ -214,24 +214,25 @@ public class DailyFXStrategySystem extends StrategySystem
             DailyThreadInfo.registerUpdate("DailyFX updater", "Processing state", "processing readed signals");
             for(StrategySignal signal : readSignals)
             {
-                DailyThreadInfo.registerUpdate("DailyFX updater", "Processing state current signal", "processing signal: "
-                        + signal);
+                DailyThreadInfo.registerUpdate("DailyFX updater", "Processing state current signal",
+                    "processing signal: " + signal);
                 Strategy current = signal.getStategyId().strategy();
                 StrategySignal affected = null;
                 if((affected = current.hasPair(signal.getPair())) != null)
                 {
                     if(signal.isBuy() != affected.isBuy())
                     {
-                        current.processSignalChange(signal.getPair(), true, false, affected.getLotNumber(), 0, affected);
+                        current
+                            .processSignalChange(signal.getPair(), true, false, affected.getLotNumber(), 0, affected);
                         current.processSignalChange(signal.getPair(), false, signal.isBuy(), signal.getLotNumber(),
-                                affected.getEntryPrice(), affected);
+                            affected.getEntryPrice(), affected);
                         changed = true;
                         DailyLog.logInfoWithTitle("rangos", "Cambio: " + affected + " por: " + signal);
                     }
                     if(affected.getLotNumber() > signal.getLotNumber())
                     {
                         current.processSignalChange(signal.getPair(), true, false,
-                                affected.getLotNumber() - signal.getLotNumber(), affected.getEntryPrice(), affected);
+                            affected.getLotNumber() - signal.getLotNumber(), affected.getEntryPrice(), affected);
                         changed = true;
                         if(affected.isBuy())
                         {
@@ -285,27 +286,28 @@ public class DailyFXStrategySystem extends StrategySystem
                 else
                 {
                     current.processSignalChange(signal.getPair(), false, signal.isBuy(), signal.getLotNumber(),
-                            signal.getEntryPrice(), affected);
+                        signal.getEntryPrice(), affected);
                     changed = true;
                     DailyLog.logInfoWithTitle("rangos", "Agregando: " + signal);
                 }
-                DailyThreadInfo.registerUpdate("DailyFX updater", "Processing state current signal", "signal processed: "
-                        + signal);
+                DailyThreadInfo.registerUpdate("DailyFX updater", "Processing state current signal",
+                    "signal processed: " + signal);
             }
             for(StrategyId strategyId : strategies)
             {
                 Strategy current = strategyId.strategy();
                 DailyThreadInfo.registerUpdate("DailyFX updater", "Processing state",
-                        "processing strategy, checking stops: " + strategyId);
+                    "processing strategy, checking stops: " + strategyId);
                 current.checkStops();
                 List<StrategySignal> signalsList = current.duplicateSignals();
                 for(StrategySignal senal : signalsList)
                 {
                     DailyThreadInfo.registerUpdate("DailyFX updater", "Processing state existing signals",
-                            "processing existing signal: " + senal);
+                        "processing existing signal: " + senal);
                     boolean found = false;
                     for(StrategySignal newSignal : readSignals)
-                        if(current.getId().equals(newSignal.getStategyId()) && senal.getPair().equals(newSignal.getPair()))
+                        if(current.getId().equals(newSignal.getStategyId())
+                            && senal.getPair().equals(newSignal.getPair()))
                         {
                             found = true;
                             break;

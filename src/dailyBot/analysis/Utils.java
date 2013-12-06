@@ -13,7 +13,7 @@ import dailyBot.model.Strategy.StrategyId;
 public class Utils
 {
     static AtomicReference<List<SignalHistoryRecord>> allRecords = new AtomicReference<List<SignalHistoryRecord>>(
-            MySqlConnection.getRecords());
+        MySqlConnection.getRecords());
 
     static AtomicInteger lastUpdate = new AtomicInteger(Calendar.getInstance().get(Calendar.DAY_OF_MONTH));
 

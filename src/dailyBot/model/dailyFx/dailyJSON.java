@@ -86,8 +86,8 @@ public class dailyJSON
                 s.components = null;
                 if(darEstrategia(s.strategyId) == null)
                     continue;
-                StrategySignal actual = new StrategySignal(darEstrategia(s.strategyId), compra, Pair.parsePair(s.symbol),
-                        s.curOpLots, s.entryPrice, stop);
+                StrategySignal actual = new StrategySignal(darEstrategia(s.strategyId), compra,
+                    Pair.parsePair(s.symbol), s.curOpLots, s.entryPrice, stop);
                 nuevasSenales.add(actual);
             }
             dailyJson.Signal = null;
@@ -532,8 +532,8 @@ class SenalJSON
         String componentes = "";
         for(ComponentesJSON c : components)
             componentes += c.toString() + " ";
-        return dailyJSON.darEstrategia((int) strategyId).toString() + ", lotes: " + curOpLots + ", entrada: " + entryPrice
-                + ", par: " + Pair.parsePair(symbol).toString() + ", componentes: {" + componentes + "}";
+        return dailyJSON.darEstrategia((int) strategyId).toString() + ", lotes: " + curOpLots + ", entrada: "
+            + entryPrice + ", par: " + Pair.parsePair(symbol).toString() + ", componentes: {" + componentes + "}";
     }
 }
 

@@ -60,8 +60,8 @@ public class GraphicStrategy extends JFrame
                     else
                         for(int i = 0; i < filtros.length; i++)
                             filtros[i] = new RangeFilter();
-                    new RangesView(GraphicStrategy.this, filtros, Utils.getStrategyRecords(strategyId, pair), strategyId,
-                            pair, strategyId + " " + pair);
+                    new RangesView(GraphicStrategy.this, filtros, Utils.getStrategyRecords(strategyId, pair),
+                        strategyId, pair, strategyId + " " + pair);
                 }
                 catch(Exception e1)
                 {
@@ -87,7 +87,7 @@ public class GraphicStrategy extends JFrame
                     for(int i = 0; i < filtros.length; i++)
                         filtros[i] = new RangeFilter();
                     new RangesView(GraphicStrategy.this, filtros, Utils.getStrategyRecords(strategyId, Pair.ALL), null,
-                            null, strategyId + " " + Pair.ALL);
+                        null, strategyId + " " + Pair.ALL);
                 }
                 catch(Exception e1)
                 {
@@ -115,7 +115,7 @@ public class GraphicStrategy extends JFrame
                     frame.pack();
                     frame.setVisible(true);
                     new HistoricChart(new RangeFilter(), Utils.getStrategyRecords(strategyId, Pair.ALL), strategyId
-                            .toString(), null);
+                        .toString(), null);
                 }
                 catch(Exception e1)
                 {
@@ -130,9 +130,9 @@ public class GraphicStrategy extends JFrame
     public static void main(String[] args)
     {
         new GraphicStrategy(
-                StrategyId.values()[((StrategyId) JOptionPane.showInputDialog(null, "Escoja la estrategia",
-                        "Analisis grafico", JOptionPane.QUESTION_MESSAGE, null, StrategyId.values(), StrategyId.BREAKOUT1))
-                        .ordinal()],
-                false);
+            StrategyId.values()[((StrategyId) JOptionPane.showInputDialog(null, "Escoja la estrategia",
+                "Analisis grafico", JOptionPane.QUESTION_MESSAGE, null, StrategyId.values(), StrategyId.BREAKOUT1))
+                .ordinal()],
+            false);
     }
 }

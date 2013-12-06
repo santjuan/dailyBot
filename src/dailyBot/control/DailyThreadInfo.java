@@ -76,7 +76,7 @@ public class DailyThreadInfo
             if(entry.getValue().longValue() == uniqueId)
                 threadName = entry.getKey();
         LastUpdate update = (current && building.containsKey(threadName)) ? building.get(threadName) : lastUpdates
-                .get(threadName);
+            .get(threadName);
         if(update == null)
             update = lastUpdates.get(threadName);
         if(update == null)

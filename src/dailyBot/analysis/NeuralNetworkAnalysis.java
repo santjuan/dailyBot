@@ -48,7 +48,7 @@ public class NeuralNetworkAnalysis
         {
             final MLData output = network.compute(pair.getInput());
             System.out.println(pair.getInput().getData(0) + "," + pair.getInput().getData(1) + ", actual="
-                    + output.getData(0) + ",ideal=" + pair.getIdeal().getData(0));
+                + output.getData(0) + ",ideal=" + pair.getIdeal().getData(0));
 
         }
     }
@@ -64,7 +64,7 @@ public class NeuralNetworkAnalysis
     }
 
     private static BasicNetwork generateNeuralNetwork(StrategyId id, Pair currency, boolean isBuy, int iterations,
-            int middleNeurons) throws IOException
+        int middleNeurons) throws IOException
     {
         List<SignalHistoryRecord> allEntries = Utils.getStrategyRecords(id, currency);
         Collections.shuffle(allEntries);
@@ -96,7 +96,8 @@ public class NeuralNetworkAnalysis
         for(int i = 0; i < inputs.length; i++)
         {
             final MLData output = network.compute(new BasicMLData(inputs[i]));
-            System.out.println(Arrays.toString(inputs[i]) + ", actual=" + output.getData(0) + ", ideal=" + outputs[i][0]);
+            System.out.println(Arrays.toString(inputs[i]) + ", actual=" + output.getData(0) + ", ideal="
+                + outputs[i][0]);
 
         }
         System.out.println("Validation:");
@@ -107,7 +108,7 @@ public class NeuralNetworkAnalysis
         {
             final MLData output = network.compute(new BasicMLData(inputsValidation[i]));
             System.out.println(Arrays.toString(inputsValidation[i]) + ", actual=" + output.getData(0) + ", ideal="
-                    + outputsValidation[i][0]);
+                + outputsValidation[i][0]);
 
         }
         return network;

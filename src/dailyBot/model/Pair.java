@@ -13,9 +13,9 @@ import dailyBot.control.connection.MySqlConnection;
 
 public enum Pair
 {
-    EURUSD(10000), USDJPY(100), GBPUSD(10000), USDCHF(10000), EURCHF(EURUSD, USDCHF, 10000), AUDUSD(10000), USDCAD(10000), NZDUSD(
-            10000), EURJPY(EURUSD, USDJPY, 100), GBPJPY(100), CHFJPY(USDCHF, USDJPY, 100), GBPCHF(GBPUSD, USDCHF, 10000), EURAUD(
-            EURUSD, AUDUSD, 10000), AUDJPY(AUDUSD, USDJPY, 100), ALL(0);
+    EURUSD(10000), USDJPY(100), GBPUSD(10000), USDCHF(10000), EURCHF(EURUSD, USDCHF, 10000), AUDUSD(10000), USDCAD(
+        10000), NZDUSD(10000), EURJPY(EURUSD, USDJPY, 100), GBPJPY(100), CHFJPY(USDCHF, USDJPY, 100), GBPCHF(GBPUSD,
+        USDCHF, 10000), EURAUD(EURUSD, AUDUSD, 10000), AUDJPY(AUDUSD, USDJPY, 100), ALL(0);
 
     private final Pair fatherA;
     private final Pair fatherB;
@@ -110,21 +110,21 @@ public enum Pair
                 }
                 else
                     errorMessage = "Error en Par inicializando " + toString() + ", bid anterior: " + currentBid
-                            + ", bid nuevo: " + bid + ", ask anterior: " + currentAsk + ", ask nuevo: " + ask;
+                        + ", bid nuevo: " + bid + ", ask anterior: " + currentAsk + ", ask nuevo: " + ask;
                 startNumber++;
             }
             else
             {
                 if(Math.abs(differenceInPips(bid, true)) <= 200 && Math.abs(differenceInPips(ask, false)) <= 200
-                        && pairSpread(bid, ask, this) <= 75)
+                    && pairSpread(bid, ask, this) <= 75)
                 {
                     currentBid = bid;
                     currentAsk = ask;
                 }
                 else
                 {
-                    errorMessage = "Error en par " + toString() + ", bid anterior: " + currentBid + ", bid nuevo: " + bid
-                            + ", ask anterior: " + currentAsk + ", ask nuevo: " + ask;
+                    errorMessage = "Error en par " + toString() + ", bid anterior: " + currentBid + ", bid nuevo: "
+                        + bid + ", ask anterior: " + currentAsk + ", ask nuevo: " + ask;
                 }
             }
         }
@@ -289,7 +289,7 @@ public enum Pair
             String debug = "";
             for(StrategySignal s : signals)
                 debug += s.getStategyId().toString() + " " + s.getPair().toString() + " " + s.getEntryPrice() + " "
-                        + s.isBuy() + " " + s.getLow() + " " + s.getHigh() + "\n";
+                    + s.isBuy() + " " + s.getLow() + " " + s.getHigh() + "\n";
             return debug;
         }
         finally

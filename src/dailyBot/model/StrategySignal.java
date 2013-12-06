@@ -217,7 +217,7 @@ public class StrategySignal extends UniqueIdSignal implements Serializable
             lotNumber = this.lotNumber;
             stop = this.stop;
         }
-        return strategyId + " " + (buy ? "Compra" : "Venta") + " " + lotNumber + " Lotes de " + pair + " a: " + entryPrice
-                + " Stop: " + stop;
+        return strategyId + " " + (buy ? "Compra" : "Venta") + " " + lotNumber + " Lotes de " + pair + " a: "
+            + entryPrice + " Stop: " + stop;
     }
 }

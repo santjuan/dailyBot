@@ -37,7 +37,7 @@ public abstract class StrategySystem
         catch(Exception e)
         {
             DailyLog.logError(e.getMessage() + ", error en Iniciar procesamiento al procesar en: "
-                    + getClass().getCanonicalName());
+                + getClass().getCanonicalName());
         }
     }
 

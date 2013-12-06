@@ -25,7 +25,8 @@ public class Ranges implements Serializable
         {
         }
 
-        public Range(double minBuy, double maxBuy, double minSell, double maxSell, boolean invertedBuy, boolean invertedSell)
+        public Range(double minBuy, double maxBuy, double minSell, double maxSell, boolean invertedBuy,
+            boolean invertedSell)
         {
             this.minBuy = minBuy;
             this.maxBuy = maxBuy;
@@ -213,7 +214,8 @@ public class Ranges implements Serializable
                 ranges.put(indicator, indicator.range.duplicate());
             if(ignoreInfo && indicator.isInfo)
             {
-                message += ", ignorando: " + ranges.get(indicator).toString(indicator.calculate(record), record.buy) + "\n";
+                message += ", ignorando: " + ranges.get(indicator).toString(indicator.calculate(record), record.buy)
+                    + "\n";
                 continue;
             }
             if(indicator == Indicator.BUY)
@@ -227,13 +229,14 @@ public class Ranges implements Serializable
             else if(!ranges.get(indicator).isInside(indicator.calculate(record), record.buy))
             {
                 message += ", no cumple: " + ranges.get(indicator).toString(indicator.calculate(record), record.buy)
-                        + ", terminando con false\n";
+                    + ", terminando con false\n";
                 if(!sendMessage.equals(""))
                     DailyLog.logInfoWithTitle("rangos", message);
                 return false;
             }
             else
-                message += ", cumple: " + ranges.get(indicator).toString(indicator.calculate(record), record.buy) + "\n";
+                message += ", cumple: " + ranges.get(indicator).toString(indicator.calculate(record), record.buy)
+                    + "\n";
         }
         if(!sendMessage.equals(""))
             DailyLog.logInfoWithTitle("rangos", message);

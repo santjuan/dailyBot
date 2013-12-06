@@ -48,8 +48,8 @@ public abstract class ExternalProcessFilter extends Filter
         try
         {
             if(RMIClientMain.connection != null
-                    && !RMIClientMain.connection.getActiveSignalProvider(id.ordinal(), record.id.ordinal(),
-                            record.pair.ordinal()))
+                && !RMIClientMain.connection.getActiveSignalProvider(id.ordinal(), record.id.ordinal(),
+                    record.pair.ordinal()))
                 return false;
             if(RMIClientMain.connection == null && !isActive(record.id, record.pair))
                 return false;
@@ -58,8 +58,9 @@ public abstract class ExternalProcessFilter extends Filter
         {
             DailyLog.logRMI("Error preguntando si el proveedor esta activo " + e.getMessage());
         }
-        String message = "Intentando abrir " + id.toString() + ", " + record.id.toString() + ", " + record.pair.toString()
-                + ", " + record.pair.getCurrentPrice(record.buy) + ", " + (record.buy ? "BUY" : "SELL");
+        String message = "Intentando abrir " + id.toString() + ", " + record.id.toString() + ", "
+            + record.pair.toString() + ", " + record.pair.getCurrentPrice(record.buy) + ", "
+            + (record.buy ? "BUY" : "SELL");
         if(containKey(map, record))
         {
             if(!message.equals(""))
@@ -98,25 +99,26 @@ public abstract class ExternalProcessFilter extends Filter
                 {
                     process(record);
                     DailyThreadInfo.registerUpdate(className + " filter " + id.toString(), "Current record",
-                            "processing record " + ++count + "/" + records.size());
+                        "processing record " + ++count + "/" + records.size());
                 }
                 DailyThreadInfo.registerUpdate(className + " filter " + id.toString(), "Current record",
-                        "all records processed");
+                    "all records processed");
                 for(StrategyId strategyId : StrategyId.values())
                     for(StrategySignal signal : strategyId.strategy().duplicateSignals())
-                        process(new SignalHistoryRecord(strategyId, signal.getPair(), signal.isBuy(), signal.getStartDate(),
-                                System.currentTimeMillis(), -1, signal.getVIX(), signal.getSSI1(), signal.getSSI2(),
-                                signal.getLow(), signal.getLow()));
+                        process(new SignalHistoryRecord(strategyId, signal.getPair(), signal.isBuy(),
+                            signal.getStartDate(), System.currentTimeMillis(), -1, signal.getVIX(), signal.getSSI1(),
+                            signal.getSSI2(), signal.getLow(), signal.getLow()));
                 loaded.set(true);
                 DailyThreadInfo.registerUpdate(className + " filter " + id.toString(), "State",
-                        "finished processing records");
+                    "finished processing records");
                 DailyThreadInfo.closeThreadLoop(className + " filter " + id.toString());
             }
 
         }).start();
     }
 
-    public static synchronized Boolean getFilterAnswer(TreeMap<SignalHistoryRecord, Boolean> map, SignalHistoryRecord key)
+    public static synchronized Boolean getFilterAnswer(TreeMap<SignalHistoryRecord, Boolean> map,
+        SignalHistoryRecord key)
     {
         return map.get(key);
     }

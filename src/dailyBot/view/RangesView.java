@@ -28,7 +28,7 @@ public class RangesView extends JFrame
     private static final long serialVersionUID = -3243368885519444393L;
 
     public RangesView(final GraphicStrategy father, final Filter[] filters, List<SignalHistoryRecord> records,
-            final StrategyId strategyId, final Pair pair, String title)
+        final StrategyId strategyId, final Pair pair, String title)
     {
         super(title);
         final JFrame este = this;
@@ -36,7 +36,7 @@ public class RangesView extends JFrame
         for(int i = 0; i < filters.length; i++)
         {
             JComponent actual = new SignalProviderRanges((RangeFilter) filters[i], records, strategyId, pair, title,
-                    SignalProviderId.values()[i]);
+                SignalProviderId.values()[i]);
             panel.addTab(SignalProviderId.values()[i].toString(), actual);
         }
         add(panel);
@@ -48,8 +48,8 @@ public class RangesView extends JFrame
                 try
                 {
                     if(strategyId != null
-                            && JOptionPane.showConfirmDialog(este, "Guardar el rango?",
-                                    "Guardar " + strategyId + " " + pair, JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION)
+                        && JOptionPane.showConfirmDialog(este, "Guardar el rango?", "Guardar " + strategyId + " "
+                            + pair, JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION)
                     {
                         // for(int i = 0; i < filtros.length; i++)
                         // padre.cambiarFiltrosProveedor(i, filtros[i]);
@@ -74,13 +74,13 @@ public class RangesView extends JFrame
         private ArrayList<RangeView> rangeViews = new ArrayList<RangeView>();
 
         public SignalProviderRanges(final RangeFilter filter, List<SignalHistoryRecord> records,
-                final StrategyId strategyId, final Pair pair, String title, SignalProviderId signalProviderId)
+            final StrategyId strategyId, final Pair pair, String title, SignalProviderId signalProviderId)
         {
             ProgressChart graficaProgreso = new ProgressChart(filter, records);
             final IndicatorChart graficaIndicador = new IndicatorChart(Indicator.VIX.getRange().duplicate(), records,
-                    Indicator.VIX, filter.getRanges(pair, strategyId));
+                Indicator.VIX, filter.getRanges(pair, strategyId));
             HistoricChart graficaHistorial = new HistoricChart(filter, records, signalProviderId.toString(),
-                    signalProviderId);
+                signalProviderId);
             JPanel panelRangos = new JPanel();
             GridLayout gridLayout = new GridLayout();
             gridLayout.setRows(6);
@@ -90,7 +90,7 @@ public class RangesView extends JFrame
             for(Indicator i : Indicator.values())
             {
                 RangeView r = new RangeView(this, i.getRange().duplicate(), filter.getRanges(pair, strategyId),
-                        graficaProgreso, graficaIndicador, graficaHistorial, i);
+                    graficaProgreso, graficaIndicador, graficaHistorial, i);
                 rangeViews.add(r);
                 panelRangos.add(r);
             }

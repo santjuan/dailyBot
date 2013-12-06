@@ -13,7 +13,8 @@ public abstract class XMLPersistentObject
 
     private static String getCreateTableStatement(String tableName)
     {
-        return "CREATE TABLE IF NOT EXISTS " + tableName + " (Id INTEGER NOT NULL, Xml TEXT NOT NULL, PRIMARY KEY (Id))";
+        return "CREATE TABLE IF NOT EXISTS " + tableName
+            + " (Id INTEGER NOT NULL, Xml TEXT NOT NULL, PRIMARY KEY (Id))";
     }
 
     private static void tryCreateTable(String tableName)
@@ -44,7 +45,7 @@ public abstract class XMLPersistentObject
         encoder.close();
         String xml = new String(baos.toByteArray());
         String insertSql = "INSERT INTO " + getTableName() + "(Id, Xml) VALUES (" + objectId() + ", '" + xml
-                + "') ON DUPLICATE KEY UPDATE Xml = '" + xml + "'";
+            + "') ON DUPLICATE KEY UPDATE Xml = '" + xml + "'";
         MySqlConnection.executeSql(insertSql);
     }
 

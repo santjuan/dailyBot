@@ -16,7 +16,7 @@ public class RMIServerConnection extends BasicConnection implements RMIConnectio
         RMIConnection server;
 
         static Boolean[][][] dpActive = new Boolean[SignalProviderId.values().length][StrategyId.values().length][Pair
-                .values().length];
+            .values().length];
         static Filter[] dpFilters = new Filter[SignalProviderId.values().length];
 
         public Local(RMIConnection server)
@@ -33,8 +33,8 @@ public class RMIServerConnection extends BasicConnection implements RMIConnectio
         }
 
         @Override
-        public synchronized void setActiveSignalProvider(int signalProviderId, int strategyId, int pairId, boolean active,
-                boolean open) throws RemoteException
+        public synchronized void setActiveSignalProvider(int signalProviderId, int strategyId, int pairId,
+            boolean active, boolean open) throws RemoteException
         {
             server.setActiveSignalProvider(signalProviderId, strategyId, pairId, active, open);
             dpActive[signalProviderId][strategyId][pairId] = active;
@@ -48,12 +48,12 @@ public class RMIServerConnection extends BasicConnection implements RMIConnectio
 
         @Override
         public synchronized boolean getActiveSignalProvider(int signalProviderId, int strategyId, int pairId)
-                throws RemoteException
+            throws RemoteException
         {
             if(dpActive[signalProviderId][strategyId][pairId] != null)
                 return dpActive[signalProviderId][strategyId][pairId];
             return dpActive[signalProviderId][strategyId][pairId] = server.getActiveSignalProvider(signalProviderId,
-                    strategyId, pairId);
+                strategyId, pairId);
         }
 
         @Override
@@ -108,27 +108,27 @@ public class RMIServerConnection extends BasicConnection implements RMIConnectio
 
     @Override
     public void setActiveSignalProvider(int signalProviderId, int strategyId, int pairId, boolean active, boolean open)
-            throws RemoteException
+        throws RemoteException
     {
         SignalProviderId.values()[signalProviderId].signalProvider().setActive(StrategyId.values()[strategyId],
-                Pair.values()[pairId], active);
+            Pair.values()[pairId], active);
         if(active && open)
             SignalProviderId.values()[signalProviderId].signalProvider().openActive(StrategyId.values()[strategyId],
-                    Pair.values()[pairId]);
+                Pair.values()[pairId]);
     }
 
     @Override
     public boolean getActiveSignalProvider(int signalProviderId, int strategyId, int pairId) throws RemoteException
     {
         return SignalProviderId.values()[signalProviderId].signalProvider().getActive(StrategyId.values()[strategyId],
-                Pair.values()[pairId]);
+            Pair.values()[pairId]);
     }
 
     @Override
     public boolean getOpenSignalProvider(int signalProviderId, int strategyId, int pairId) throws RemoteException
     {
         return SignalProviderId.values()[signalProviderId].signalProvider().isOpen(StrategyId.values()[strategyId],
-                Pair.values()[pairId]);
+            Pair.values()[pairId]);
     }
 
     @Override

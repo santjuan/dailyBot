@@ -59,11 +59,11 @@ public class DailyTable extends JFrame
             toShow[i][1] = listaE.get(i).isBuy() + " toco: " + listaE.get(i).isStopTouched();
             toShow[i][2] = listaE.get(i).getPair().toString();
             toShow[i][3] = df.format(listaE.get(i).getEntryPrice()) + " " + df.format(listaE.get(i).stopDaily()) + " "
-                    + df.format(listaE.get(i).getStop());
+                + df.format(listaE.get(i).getStop());
             try
             {
                 toShow[i][4] = RMIClientMain.connection.getProfitStrategySignal(listaE.get(i).getStategyId().ordinal(),
-                        listaE.get(i).getPair().ordinal());
+                    listaE.get(i).getPair().ordinal());
             }
             catch(Exception e)
             {
@@ -92,8 +92,8 @@ public class DailyTable extends JFrame
             toShow[i][0] = listaE.get(i).getStategyId().toString();
             try
             {
-                StrategySignal esta = RMIClientMain.connection.getStrategySignals(listaE.get(i).getStategyId().ordinal(),
-                        listaE.get(i).getPair().ordinal());
+                StrategySignal esta = RMIClientMain.connection.getStrategySignals(listaE.get(i).getStategyId()
+                    .ordinal(), listaE.get(i).getPair().ordinal());
                 if(esta == null)
                 {
                     toShow[i][1] = "Error: no existe en Estrategia";
@@ -103,11 +103,11 @@ public class DailyTable extends JFrame
                 toShow[i][1] = listaE.get(i).isBuy() + " toco: " + esta.isStopTouched();
                 toShow[i][2] = listaE.get(i).getPair().toString();
                 toShow[i][3] = df.format(esta.getEntryPrice()) + " " + df.format(esta.stopDaily()) + " "
-                        + df.format(esta.getStop());
+                    + df.format(esta.getStop());
                 toShow[i][4] = RMIClientMain.connection.getProfitStrategySignal(listaE.get(i).getStategyId().ordinal(),
-                        listaE.get(i).getPair().ordinal())
-                        + " "
-                        + listaE.get(i).getUniqueId("zulutrade-" + signalProviderId.toString());
+                    listaE.get(i).getPair().ordinal())
+                    + " "
+                    + listaE.get(i).getUniqueId("zulutrade-" + signalProviderId.toString());
             }
             catch(Exception e)
             {

@@ -42,8 +42,8 @@ public enum Indicator
                 return 7;
             return 8;
         }
-    }, new Range(0, 8, 0, 8), 1, true, new Object[][] { { 0, "1s" }, { 1, "2s" }, { 2, "3s" }, { 3, "1m" }, { 4, "2m" },
-            { 5, "3m" }, { 6, "6m" }, { 7, "1a" }, { 8, "t" } }),
+    }, new Range(0, 8, 0, 8), 1, true, new Object[][] { { 0, "1s" }, { 1, "2s" }, { 2, "3s" }, { 3, "1m" },
+        { 4, "2m" }, { 5, "3m" }, { 6, "6m" }, { 7, "1a" }, { 8, "t" } }),
 
     VIX(new Calculable()
     {

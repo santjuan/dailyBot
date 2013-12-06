@@ -52,8 +52,8 @@ public class SignalProvider extends XMLPersistentObject
             public Filter[] getFilters(SignalProviderId id)
             {
                 return new Filter[] { "octave".equals(DailyProperties
-                        .getProperty("dailyBot.model.SignalProvider.DAILYBOTSSIEURO.filter")) ? new OctaveFilter(id)
-                        : new BasicFilter() };
+                    .getProperty("dailyBot.model.SignalProvider.DAILYBOTSSIEURO.filter")) ? new OctaveFilter(id)
+                    : new BasicFilter() };
             }
         }, new BrokerFactory()
         {
@@ -140,12 +140,13 @@ public class SignalProvider extends XMLPersistentObject
                     try
                     {
                         writePersistence();
-                        DailyThreadInfo.registerUpdate(id.toString() + " persistence", "State", "data stored without errors");
+                        DailyThreadInfo.registerUpdate(id.toString() + " persistence", "State",
+                            "data stored without errors");
                     }
                     catch(Exception e)
                     {
-                        DailyThreadInfo.registerUpdate(id.toString() + " persistence", "State", "error storing in db " + e
-                                + " " + e.getMessage());
+                        DailyThreadInfo.registerUpdate(id.toString() + " persistence", "State", "error storing in db "
+                            + e + " " + e.getMessage());
                         throw e;
                     }
                     finally
@@ -196,8 +197,8 @@ public class SignalProvider extends XMLPersistentObject
                         }
                         catch(RuntimeException e)
                         {
-                            DailyThreadInfo.registerUpdate(id.toString() + " checker", "State", "error checking brokers "
-                                    + e + " " + e.getMessage());
+                            DailyThreadInfo.registerUpdate(id.toString() + " checker", "State",
+                                "error checking brokers " + e + " " + e.getMessage());
                             throw e;
                         }
                         finally
@@ -239,7 +240,7 @@ public class SignalProvider extends XMLPersistentObject
         {
             if(signal.getUniqueId(id.toString()) == 0L)
                 DailyLog.logError("Senal con par: " + signal.getPair() + ", estrategia: " + signal.getStategyId()
-                        + ", proveedor " + id + " no existe y se intento cerrar.");
+                    + ", proveedor " + id + " no existe y se intento cerrar.");
             else
             {
                 for(Broker broker : brokers)
@@ -252,11 +253,11 @@ public class SignalProvider extends XMLPersistentObject
         {
             if(signal.getUniqueId(id.toString()) != 0L)
                 DailyLog.logError("Senal con par: " + signal.getPair() + ", estrategia: " + signal.getStategyId()
-                        + ", proveedor " + id + " ya existe y se intento abrir otra vez.");
+                    + ", proveedor " + id + " ya existe y se intento abrir otra vez.");
             else
             {
                 if(!filterAllow(new SignalHistoryRecord(signal.getStategyId(), signal.getPair(), signal.isBuy(),
-                        signal.getStartDate())))
+                    signal.getStartDate())))
                     for(Broker broker : brokers)
                         broker.setUniqueId(signal, 0L);
                 else
@@ -275,7 +276,7 @@ public class SignalProvider extends XMLPersistentObject
         StrategySignal toOpen = strategyId.strategy().hasPair(pair);
         if((toOpen.getUniqueId(id.toString()) == 0L) || (toOpen == null) || (toOpen.getUniqueId(id.toString()) == 0L))
             DailyLog.logError("Senal con par: " + pair + ", estrategia: " + strategyId + ", proveedor " + id
-                    + " no estaba abierta y se intento reabrir.");
+                + " no estaba abierta y se intento reabrir.");
         else
         {
             DailyLog.logInfoWithTitle("rangos", id + " abriendo senal por orden manual: " + strategyId + ", " + pair);
@@ -290,8 +291,8 @@ public class SignalProvider extends XMLPersistentObject
         if((!signal.isStopTouched()) && (signal.getUniqueId(id.toString()) != 0L))
         {
             DailyLog.logInfoWithTitle("rangos",
-                    id + " cerrando por stop " + signal.getStategyId() + ", " + signal.getPair() + " Precio entrada: "
-                            + signal.getEntryPrice() + " Stop: " + signal.getStop() + " Es compra: " + signal.isBuy());
+                id + " cerrando por stop " + signal.getStategyId() + ", " + signal.getPair() + " Precio entrada: "
+                    + signal.getEntryPrice() + " Stop: " + signal.getStop() + " Es compra: " + signal.isBuy());
             for(Broker broker : brokers)
                 if(broker.getUniqueId(signal) != 0)
                     broker.closeSignal(signal, signal.getStategyId(), signal.getPair(), signal.isBuy());
@@ -299,7 +300,7 @@ public class SignalProvider extends XMLPersistentObject
         }
         else if(!signal.isStopTouched())
             DailyLog.logError("Senal con par: " + signal.getPair() + ", estrategia: " + signal.getStategyId()
-                    + ", proveedor " + id + " no existe y se intento cerrar (toco stop).");
+                + ", proveedor " + id + " no existe y se intento cerrar (toco stop).");
     }
 
     public boolean checkConsistency()
@@ -317,7 +318,8 @@ public class SignalProvider extends XMLPersistentObject
         StrategySignal toClose = strategyId.strategy().hasPair(pair);
         if(toClose.getUniqueId(strategyId.toString()) != 0L)
         {
-            DailyLog.logInfoWithTitle("rangos", strategyId + " cerrando senal por orden manual: " + strategyId + ", " + pair);
+            DailyLog.logInfoWithTitle("rangos", strategyId + " cerrando senal por orden manual: " + strategyId + ", "
+                + pair);
             boolean any = false;
             for(Broker broker : brokers)
                 if(broker.getUniqueId(toClose) != 0L)
@@ -362,7 +364,7 @@ public class SignalProvider extends XMLPersistentObject
                     {
                         broker.closeSignal(signal, signal.getStategyId(), signal.getPair(), signal.isBuy());
                         DailyLog.logError("Proveedor " + this.id + ", estrategia: " + strategyId + ", par: " + pair
-                                + " estaba abierta y se desactivo, cerrada manualmente.");
+                            + " estaba abierta y se desactivo, cerrada manualmente.");
                     }
                 signal.setUniqueId(strategyId.toString(), 0L);
             }

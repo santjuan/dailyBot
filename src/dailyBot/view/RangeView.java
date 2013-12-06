@@ -40,8 +40,8 @@ public class RangeView extends JPanel
     }
 
     public RangeView(final SignalProviderRanges rangesView, Range original, final Ranges ranges,
-            final ProgressChart progressChart, final IndicatorChart indicatorChart, final HistoricChart historicChart,
-            final Indicator indicator)
+        final ProgressChart progressChart, final IndicatorChart indicatorChart, final HistoricChart historicChart,
+        final Indicator indicator)
     {
         this.ranges = ranges;
         this.indicator = indicator;
