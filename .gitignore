@@ -1,0 +1,7 @@
+dailyBotRelease.conf
+dailyBot.jar
+runDailyBot.sh
+runOctave.sh
+octave/
+logs/*
+bin/

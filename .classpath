@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="lib" path="libs/apache-mime4j-0.6.jar"/>
+	<classpathentry kind="lib" path="libs/commons-codec-1.3.jar"/>
+	<classpathentry kind="lib" path="libs/commons-logging-1.1.1.jar"/>
+	<classpathentry kind="lib" path="libs/dsn.jar"/>
+	<classpathentry kind="lib" path="libs/httpclient-4.0.1.jar"/>
+	<classpathentry kind="lib" path="libs/httpcore-4.0.1.jar"/>
+	<classpathentry kind="lib" path="libs/httpmime-4.0.1.jar"/>
+	<classpathentry kind="lib" path="libs/imap.jar"/>
+	<classpathentry kind="lib" path="libs/jcommon-1.0.15.jar"/>
+	<classpathentry kind="lib" path="libs/jfreechart-1.0.12.jar"/>
+	<classpathentry kind="lib" path="libs/mail.jar"/>
+	<classpathentry kind="lib" path="libs/mailapi.jar"/>
+	<classpathentry kind="lib" path="libs/mysql-connector-java-5.1.12-bin.jar"/>
+	<classpathentry kind="lib" path="libs/pop3.jar"/>
+	<classpathentry kind="lib" path="libs/smtp.jar"/>
+	<classpathentry kind="lib" path="libs/gson-1.5.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="libs/smack.jar"/>
+	<classpathentry kind="lib" path="libs/smackx.jar"/>
+	<classpathentry kind="lib" path="libs/jackson-core-asl-1.8.10.jar"/>
+	<classpathentry kind="lib" path="libs/jackson-mapper-asl-1.8.10.jar"/>
+	<classpathentry kind="lib" path="libs/zulutradeApi.jar"/>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="libs/encog-core-3.1.0.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
