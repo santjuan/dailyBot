@@ -16,18 +16,19 @@ The view package contain several UIs which can be used to control the system and
 
 About DailyBot:
 
-I started this project in 2010 with the purpose of relaying DailyFX's free signals to zulutrade and to learn more about the Java API. The first approach in order to relay DailyFX signals was taking screenshots of the signals page and doing OCR. Then I found that it was possible to login directly from Java and receive the signals programmatically from a page that relayed them as JSON objects.
+I started this project in 2010 with the purpose of relaying DailyFX's free signals to Zulutrade and to learn more about the Java API. The first approach in order to obtain the signals from DailyFX's page was taking screenshots of the page and doing OCR. Then, after trying a lot, I was able to login directly from Java and receive the signals programmatically from a page that transmitted them as JSON objects.
+
 After that problem was solved, the new problem was choosing which signals to relay, since they were not all of the same quality. First of all it was important to define several characteristics to distinguish between the market conditions in which each signal was created, so the chosen characteristics were: Daily FX's Speculative Sentiment Index (SSI), the Standard and Poors (SP500) Volatility Index (VIX), the Average True Range of the forex pair (ATR) and the Relative Strength Index of the forex pair (RSI). To learn about them:
 SSI: http://www.dailyfx.com/forex/education/trading_tips/chart_of_the_day/2013/06/10/How_to_Read_SSI.html
 VIX: http://en.wikipedia.org/wiki/VIX
 ATR: http://en.wikipedia.org/wiki/Average_true_range
 RSI: http://en.wikipedia.org/wiki/Relative_strength_index
 
-The first filter was done manually, so I manually choose for which ranges of the indicators each Forex strategy and currency pair would be active. Then, with the help of a friend (https://github.com/sebasutp), we created an AI system which uses probabilistic models to determine for a particular market condition what is the probability of a trade to be successful. That AI system, which is written in Octave, is the only part of DailyBot which is not public or released here in GitHub.
+The first filter was done manually, so for the first version I manually choose for which ranges of the characteristics each Forex strategy and currency pair would be active (for example BREAKOUT2 on EURUSD would only be active when the VIX was between 25 and 45). Then, with the help of a friend (https://github.com/sebasutp), we created an AI system which uses probabilistic models to determine for a particular market condition what is the probability of a trade to be successful and what is the expected profit. That AI system, which is written in Octave, is the only part of DailyBot that is not public or released here in GitHub.
 
 How to setup:
 
 The project is an Eclipse project. If you correctly fill all the DailyBot.conf properties, it will work without major problems (you might have to correct some permission problems with java.policy and the RMI codebase). In order to use RMI you should first start the rmiregistry. 
 About the database: the system automatically creates the tables (it currently only use 4 tables), so you only need to provide the address and login data for an empty MySql database (see the DailyBot.conf file for details).
 
-Since the system was developed by a single person, I didn't use Javadoc nor commented the code, however I plan to do it in a future version.
+Since the system was developed mostly by a single person, I didn't use Javadoc nor commented the code, however I plan to do it in a future version.
