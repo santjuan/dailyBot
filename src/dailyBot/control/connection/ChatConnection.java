@@ -202,7 +202,7 @@ public class ChatConnection
                     }
                     if(!any)
                     {
-                        String answer = "Comandos validos: chequear hilos\nchequear todos\nchequear zulutrade\ncerrar IDESTRATEGIA IDPROVEEDOR PAR\nlistar MINUTOS\nconsultar IDUNICO ACTUAL\nmanual open IDPROVEEDOR PAIR ISBUY\nmanual close IDPROVEEDOR IDTRADE";
+                        String answer = "Comandos validos: chequear hilos\nchequear todos\nchequear zulutrade\nchequear IDESTRATEGIA\ncerrar IDESTRATEGIA IDPROVEEDOR PAR\nlistar MINUTOS\nconsultar IDUNICO ACTUAL\nmanual open IDPROVEEDOR PAIR ISBUY\nmanual close IDPROVEEDOR IDTRADE";
                         sendMessage(answer, true);
                         any = true;
                     }
