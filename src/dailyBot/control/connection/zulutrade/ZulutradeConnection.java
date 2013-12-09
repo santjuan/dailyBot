@@ -18,11 +18,11 @@ import dailyBot.control.DailyLog;
 import dailyBot.control.DailyProperties;
 import dailyBot.model.Broker;
 import dailyBot.model.Pair;
+import dailyBot.model.SignalProvider.SignalProviderId;
+import dailyBot.model.Strategy.StrategyId;
 import dailyBot.model.StrategySignal;
 import dailyBot.model.UniqueIdSignal;
 import dailyBot.model.Utils;
-import dailyBot.model.Strategy.StrategyId;
-import dailyBot.model.SignalProvider.SignalProviderId;
 
 public class ZulutradeConnection implements Broker
 {
@@ -289,6 +289,8 @@ public class ZulutradeConnection implements Broker
                         if(signal != null)
                             signal.setStopTouched(true);
                     }
+                    else
+                        signal.setUniqueId("zulutrade-" + id.toString() + "-lastchecktime", System.currentTimeMillis());
                 }
             }
         }

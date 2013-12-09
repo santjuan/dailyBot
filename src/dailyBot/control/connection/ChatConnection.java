@@ -12,15 +12,16 @@ import org.jivesoftware.smack.MessageListener;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.packet.Message;
 
-import dailyBot.control.DailyThreadAdmin;
 import dailyBot.control.DailyLog;
-import dailyBot.control.DailyThread;
 import dailyBot.control.DailyProperties;
+import dailyBot.control.DailyThread;
+import dailyBot.control.DailyThreadAdmin;
 import dailyBot.control.DailyThreadInfo;
 import dailyBot.model.Pair;
-import dailyBot.model.StrategySignal;
-import dailyBot.model.Strategy.StrategyId;
 import dailyBot.model.SignalProvider.SignalProviderId;
+import dailyBot.model.Strategy.StrategyId;
+import dailyBot.model.StrategySignal;
+import dailyBot.model.Utils;
 import dailyBot.model.dailyFx.DailyFXStrategySystem;
 
 public class ChatConnection
@@ -82,6 +83,16 @@ public class ChatConnection
                             answer += id + "\n" + id.signalProvider().checkAllBrokers() + "\n\n";
                         sendMessage(answer, true);
                         any = true;
+                    }
+                    for(StrategyId id : StrategyId.values())
+                    {
+                        String command = "chequear " + id;
+                        if(body.contains(command))
+                        {
+                            String answer = Utils.checkSignals(id);
+                            sendMessage(answer, true);
+                            any = true;
+                        }
                     }
                     if(body.contains("listar"))
                     {

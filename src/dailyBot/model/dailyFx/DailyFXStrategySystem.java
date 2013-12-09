@@ -9,19 +9,19 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 
-import dailyBot.control.DailyProperties;
-import dailyBot.control.DailyThreadAdmin;
 import dailyBot.control.DailyBotMain;
 import dailyBot.control.DailyLog;
-import dailyBot.control.DailyThread;
+import dailyBot.control.DailyProperties;
 import dailyBot.control.DailyRunnable;
+import dailyBot.control.DailyThread;
+import dailyBot.control.DailyThreadAdmin;
 import dailyBot.control.DailyThreadInfo;
 import dailyBot.control.connection.dailyFx.DailyFxServerConnection;
+import dailyBot.model.SignalProvider.SignalProviderId;
 import dailyBot.model.Strategy;
+import dailyBot.model.Strategy.StrategyId;
 import dailyBot.model.StrategySignal;
 import dailyBot.model.StrategySystem;
-import dailyBot.model.Strategy.StrategyId;
-import dailyBot.model.SignalProvider.SignalProviderId;
 
 public class DailyFXStrategySystem extends StrategySystem
 {
@@ -220,6 +220,7 @@ public class DailyFXStrategySystem extends StrategySystem
                 StrategySignal affected = null;
                 if((affected = current.hasPair(signal.getPair())) != null)
                 {
+                    boolean changedInternal = false;
                     if(signal.isBuy() != affected.isBuy())
                     {
                         current
@@ -227,13 +228,13 @@ public class DailyFXStrategySystem extends StrategySystem
                         current.processSignalChange(signal.getPair(), false, signal.isBuy(), signal.getLotNumber(),
                             affected.getEntryPrice(), affected);
                         changed = true;
+                        changedInternal = true;
                         DailyLog.logInfoWithTitle("rangos", "Cambio: " + affected + " por: " + signal);
                     }
                     if(affected.getLotNumber() > signal.getLotNumber())
                     {
                         current.processSignalChange(signal.getPair(), true, false,
                             affected.getLotNumber() - signal.getLotNumber(), affected.getEntryPrice(), affected);
-                        changed = true;
                         if(affected.isBuy())
                         {
                             if(affected.getStop() < affected.getEntryPrice())
@@ -244,13 +245,19 @@ public class DailyFXStrategySystem extends StrategySystem
                             if(affected.getStop() > affected.getEntryPrice())
                                 affected.setStop(0d);
                         }
+                        changed = true;
+                        changedInternal = true;
                         DailyLog.logInfoWithTitle("rangos", "Cambio: " + affected + " por: " + signal);
                     }
                     else
                     {
                         int profit = affected.getPair().differenceInPips(affected.getEntryPrice(), affected.isBuy());
                         if(Math.abs(affected.getStop()) < 1e-4d)
+                        {
                             affected.setStop(signal.getStop());
+                            changed = true;
+                            changedInternal = true;
+                        }
                         else
                         {
                             if(profit >= 75)
@@ -261,6 +268,8 @@ public class DailyFXStrategySystem extends StrategySystem
                                     try
                                     {
                                         affected.setStop(stop);
+                                        changed = true;
+                                        changedInternal = true;
                                     }
                                     catch(Exception e)
                                     {
@@ -272,16 +281,26 @@ public class DailyFXStrategySystem extends StrategySystem
                         if(affected.isBuy())
                         {
                             if(affected.getStop() < signal.getStop())
+                            {
                                 affected.setStop(signal.getStop());
+                                changed = true;
+                                changedInternal = true;
+                            }
                             affected.changeStopDaily(signal.getStop());
                         }
                         else
                         {
                             if(affected.getStop() > signal.getStop())
+                            {
                                 affected.setStop(signal.getStop());
+                                changed = true;
+                                changedInternal = true;
+                            }
                             affected.changeStopDaily(signal.getStop());
                         }
                     }
+                    if(!changedInternal)
+                        affected.setUniqueId("dailyfx-lastchecktime", System.currentTimeMillis());
                 }
                 else
                 {
@@ -300,22 +319,22 @@ public class DailyFXStrategySystem extends StrategySystem
                     "processing strategy, checking stops: " + strategyId);
                 current.checkStops();
                 List<StrategySignal> signalsList = current.duplicateSignals();
-                for(StrategySignal senal : signalsList)
+                for(StrategySignal signal : signalsList)
                 {
                     DailyThreadInfo.registerUpdate("DailyFX updater", "Processing state existing signals",
-                        "processing existing signal: " + senal);
+                        "processing existing signal: " + signal);
                     boolean found = false;
                     for(StrategySignal newSignal : readSignals)
                         if(current.getId().equals(newSignal.getStrategyId())
-                            && senal.getPair().equals(newSignal.getPair()))
+                            && signal.getPair().equals(newSignal.getPair()))
                         {
                             found = true;
                             break;
                         }
                     if(!found)
                     {
-                        DailyLog.logInfoWithTitle("rangos", "No encontrada: " + senal);
-                        current.processSignalChange(senal.getPair(), true, false, senal.getLotNumber(), 0, senal);
+                        DailyLog.logInfoWithTitle("rangos", "No encontrada: " + signal);
+                        current.processSignalChange(signal.getPair(), true, false, signal.getLotNumber(), 0, signal);
                         changed = true;
                     }
                 }
@@ -333,7 +352,7 @@ public class DailyFXStrategySystem extends StrategySystem
         systemLock.lock();
         try
         {
-            while(!changed && System.currentTimeMillis() - startTime < 100000)
+            while(!changed && (System.currentTimeMillis() - startTime) < 100000)
                 try
                 {
                     systemChanged.await(120000, TimeUnit.MILLISECONDS);
