@@ -80,7 +80,10 @@ public class DailyFXStrategySystem extends StrategySystem
                         DailyThread.sleep(1000);
                         DailyThreadInfo.registerUpdate("DailyFX updater", "State", "reading from DailyFX server");
                         String[] read = DailyFxServerConnection.readDailyFxServer();
-                        DailyThreadInfo.registerUpdate("DailyFX updater", "Last read", Arrays.toString(read));
+                        DailyThreadInfo.registerThreadLoop("DailyFX updater last read string");
+                        DailyThreadInfo.registerUpdate("DailyFX updater last read string", "Last read",
+                            Arrays.toString(read));
+                        DailyThreadInfo.closeThreadLoop("DailyFX updater last read string");
                         DailyThreadInfo.registerUpdate("DailyFX updater", "State", "readed without errors");
                         systemLock.lock();
                         try
@@ -212,6 +215,8 @@ public class DailyFXStrategySystem extends StrategySystem
             }
             ArrayList<StrategySignal> readSignals = read(read);
             DailyThreadInfo.registerUpdate("DailyFX updater", "Processing state", "processing readed signals");
+            DailyThreadInfo.registerThreadLoop("DailyFX updater last read objects");
+            String readLog = "";
             for(StrategySignal signal : readSignals)
             {
                 DailyThreadInfo.registerUpdate("DailyFX updater", "Processing state current signal",
@@ -301,9 +306,12 @@ public class DailyFXStrategySystem extends StrategySystem
                     }
                     if(!changedInternal)
                         affected.setUniqueId("dailyfx-lastchecktime", System.currentTimeMillis());
+                    readLog += "\n" + signal + "\n" + "found: " + affected + ", changed: " + changedInternal + "\n";
+
                 }
                 else
                 {
+                    readLog += "\n" + signal + "\n" + "not found, opening\n";
                     current.processSignalChange(signal.getPair(), false, signal.isBuy(), signal.getLotNumber(),
                         signal.getEntryPrice(), affected);
                     changed = true;
@@ -312,6 +320,8 @@ public class DailyFXStrategySystem extends StrategySystem
                 DailyThreadInfo.registerUpdate("DailyFX updater", "Processing state current signal",
                     "signal processed: " + signal);
             }
+            DailyThreadInfo.registerUpdate("DailyFX updater last read objects", "Last read", readLog);
+            DailyThreadInfo.closeThreadLoop("DailyFX updater last read objects");
             for(StrategyId strategyId : strategies)
             {
                 Strategy current = strategyId.strategy();
@@ -334,7 +344,8 @@ public class DailyFXStrategySystem extends StrategySystem
                     if(!found)
                     {
                         DailyLog.logInfoWithTitle("rangos", "No encontrada: " + signal);
-                        current.processSignalChange(signal.getPair(), true, false, signal.getLotNumber(), 0, signal);
+                        current.processSignalChange(signal.getPair(), true, signal.isBuy(), signal.getLotNumber(), 0,
+                            signal);
                         changed = true;
                     }
                 }
