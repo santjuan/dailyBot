@@ -71,7 +71,7 @@ public class EmailConnection
                     addressTo[i] = new InternetAddress(emailList[i]);
                 mimeMessage.setRecipients(Message.RecipientType.TO, addressTo);
                 mimeMessage.setSubject(subject);
-                mimeMessage.setContent(message, "text/plain");
+                mimeMessage.setContent(message, "text/html");
                 Transport.send(mimeMessage);
             }
             catch(MessagingException e)

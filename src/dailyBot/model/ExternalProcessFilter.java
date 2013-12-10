@@ -9,8 +9,8 @@ import dailyBot.analysis.SignalHistoryRecord;
 import dailyBot.analysis.Utils;
 import dailyBot.control.DailyLog;
 import dailyBot.control.DailyThreadInfo;
-import dailyBot.model.Strategy.StrategyId;
 import dailyBot.model.SignalProvider.SignalProviderId;
+import dailyBot.model.Strategy.StrategyId;
 import dailyBot.view.RMIClientMain;
 
 public abstract class ExternalProcessFilter extends Filter

@@ -45,8 +45,8 @@ public class ChatConnection
                     }
                     if(body.contains("chequear t"))
                     {
-                        Vector<StrategySignal> signals = DailyFXStrategySystem.lastRead.get();
-                        ArrayList<StrategySignal> all = new ArrayList<StrategySignal>();
+                        Vector <StrategySignal> signals = DailyFXStrategySystem.lastRead.get();
+                        ArrayList <StrategySignal> all = new ArrayList <StrategySignal>();
                         for(StrategyId strategyId : StrategyId.values())
                             all.addAll(strategyId.strategy().duplicateSignals());
                         String answer = "";
@@ -60,7 +60,7 @@ public class ChatConnection
                                 {
                                     StrategySignal inStrategy = inRead.getStrategyId().strategy()
                                         .hasPair(inRead.getPair());
-                                    answer += "DailyFx : " + inRead + "\n";
+                                    answer += "DailyFX : " + inRead + "\n";
                                     answer += "DailyBot: " + inStrategy + "\n\n";
                                     all.remove(inStrategy);
                                 }
@@ -81,6 +81,8 @@ public class ChatConnection
                         String answer = "";
                         for(SignalProviderId id : SignalProviderId.values())
                             answer += id + "\n" + id.signalProvider().checkAllBrokers() + "\n\n";
+                        for(SignalProviderId signalProviderId : SignalProviderId.values())
+                            answer += Utils.checkSignals("zulutrade-" + signalProviderId.toString()) + "\n";
                         sendMessage(answer, true);
                         any = true;
                     }
@@ -93,6 +95,12 @@ public class ChatConnection
                             sendMessage(answer, true);
                             any = true;
                         }
+                    }
+                    if(body.contains("chequear ALL"))
+                    {
+                        String answer = Utils.checkSignals((StrategyId) null);
+                        sendMessage(answer, true);
+                        any = true;
                     }
                     if(body.contains("listar"))
                     {
@@ -216,7 +224,7 @@ public class ChatConnection
 
     private static ConnectionConfiguration connectionConfig = new ConnectionConfiguration("talk.google.com", 5222,
         "gmail.com");
-    private static final AtomicReference<XMPPConnection> xMPPConnection = new AtomicReference<XMPPConnection>();
+    private static final AtomicReference <XMPPConnection> xMPPConnection = new AtomicReference <XMPPConnection>();
     private static final String toAddress = DailyProperties
         .getProperty("dailyBot.control.connection.ChatConnection.emailTo");
     private static Chat currentChat;

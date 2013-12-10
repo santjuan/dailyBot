@@ -5,12 +5,12 @@ import java.util.LinkedList;
 import java.util.List;
 
 import dailyBot.analysis.SignalHistoryRecord;
-import dailyBot.control.DailyProperties;
-import dailyBot.control.DailyThreadAdmin;
 import dailyBot.control.DailyBotMain;
 import dailyBot.control.DailyLog;
-import dailyBot.control.DailyThread;
+import dailyBot.control.DailyProperties;
 import dailyBot.control.DailyRunnable;
+import dailyBot.control.DailyThread;
+import dailyBot.control.DailyThreadAdmin;
 import dailyBot.control.DailyThreadInfo;
 import dailyBot.control.connection.XMLPersistentObject;
 import dailyBot.control.connection.zulutrade.ZulutradeConnection;
@@ -64,9 +64,9 @@ public class SignalProvider extends XMLPersistentObject
             }
         });
 
-        volatile SignalProvider thisSignalProvider = null;
-        Broker[] brokers;
-        FilterFactory filterFactory;
+        volatile transient SignalProvider thisSignalProvider = null;
+        volatile transient Broker[] brokers;
+        volatile transient FilterFactory filterFactory;
 
         private SignalProviderId(FilterFactory filter, BrokerFactory brokerFactory)
         {

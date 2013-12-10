@@ -17,7 +17,7 @@ public class Strategy extends XMLPersistentObject
     {
         BREAKOUT1, BREAKOUT2, RANGE1, RANGE2, MOMENTUM1, MOMENTUM2, TECHNICAL, JOEL;
 
-        volatile Strategy thisStategy = null;
+        volatile transient Strategy thisStategy = null;
 
         public Strategy strategy()
         {

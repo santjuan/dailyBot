@@ -17,25 +17,25 @@ public enum Pair
         10000), NZDUSD(10000), EURJPY(EURUSD, USDJPY, 100), GBPJPY(100), CHFJPY(USDCHF, USDJPY, 100), GBPCHF(GBPUSD,
         USDCHF, 10000), EURAUD(EURUSD, AUDUSD, 10000), AUDJPY(AUDUSD, USDJPY, 100), ALL(0);
 
-    private final Pair fatherA;
-    private final Pair fatherB;
-    private final int multiplier;
-    private double currentBid = 0;
-    private double currentAsk = 0;
-    private double currentSSI = 0;
-    private double high = Double.NEGATIVE_INFINITY;
-    private double low = Double.POSITIVE_INFINITY;
-    private double open = Double.NEGATIVE_INFINITY;
-    private Calendar date = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
-    private final LinkedList<StrategySignal> signals = new LinkedList<StrategySignal>();
-    private static String message = "";
-    private static int startNumber = 0;
-    private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock(true);
-    private final Lock read = readWriteLock.readLock();
-    private final Lock write = DailyThread.getSafeWriteLock(readWriteLock);
-    private final ReentrantReadWriteLock readWriteLockB = new ReentrantReadWriteLock(true);
-    private final Lock readB = readWriteLockB.readLock();
-    private final Lock writeB = DailyThread.getSafeWriteLock(readWriteLockB);
+    private transient final Pair fatherA;
+    private transient final Pair fatherB;
+    private transient final int multiplier;
+    private transient double currentBid = 0;
+    private transient double currentAsk = 0;
+    private transient double currentSSI = 0;
+    private transient double high = Double.NEGATIVE_INFINITY;
+    private transient double low = Double.POSITIVE_INFINITY;
+    private transient double open = Double.NEGATIVE_INFINITY;
+    private transient Calendar date = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+    private transient final LinkedList<StrategySignal> signals = new LinkedList<StrategySignal>();
+    private transient static String message = "";
+    private transient static int startNumber = 0;
+    private transient final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock(true);
+    private transient final Lock read = readWriteLock.readLock();
+    private transient final Lock write = DailyThread.getSafeWriteLock(readWriteLock);
+    private transient final ReentrantReadWriteLock readWriteLockB = new ReentrantReadWriteLock(true);
+    private transient final Lock readB = readWriteLockB.readLock();
+    private transient final Lock writeB = DailyThread.getSafeWriteLock(readWriteLockB);
 
     private Pair(int multiplier)
     {
