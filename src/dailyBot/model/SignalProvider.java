@@ -46,7 +46,7 @@ public class SignalProvider extends XMLPersistentObject
                 return new Broker[] { new ZulutradeConnection(id) };
             }
 
-        }), DAILYBOTSSIEURO(new FilterFactory()
+        }, true), DAILYBOTSSIEURO(new FilterFactory()
         {
             @Override
             public Filter[] getFilters(SignalProviderId id)
@@ -62,16 +62,18 @@ public class SignalProvider extends XMLPersistentObject
             {
                 return new Broker[] { new ZulutradeConnection(id) };
             }
-        });
+        }, false);
 
         volatile transient SignalProvider thisSignalProvider = null;
         volatile transient Broker[] brokers;
         volatile transient FilterFactory filterFactory;
+        volatile transient boolean inTesting;
 
-        private SignalProviderId(FilterFactory filter, BrokerFactory brokerFactory)
+        private SignalProviderId(FilterFactory filter, BrokerFactory brokerFactory, boolean testing)
         {
             filterFactory = filter;
             brokers = brokerFactory.getBrokers(this);
+            this.inTesting = testing;
         }
 
         public synchronized SignalProvider signalProvider()
@@ -83,16 +85,21 @@ public class SignalProvider extends XMLPersistentObject
 
         public synchronized void startSignalProvider()
         {
-            thisSignalProvider = SignalProvider.loadPersistence(this);
-            if(thisSignalProvider == null)
-                thisSignalProvider = new SignalProvider(this);
-            if(thisSignalProvider.filters == null)
-                thisSignalProvider.filters = filterFactory.getFilters(this);
+            if(DailyProperties.isTesting() == inTesting)
+            {
+                thisSignalProvider = SignalProvider.loadPersistence(this);
+                if(thisSignalProvider == null)
+                    thisSignalProvider = new SignalProvider(this);
+                if(thisSignalProvider.filters == null)
+                    thisSignalProvider.filters = filterFactory.getFilters(this);
+                else
+                    for(Filter filter : thisSignalProvider.filters)
+                        filter.startFilter(this);
+                thisSignalProvider.brokers = brokers;
+                thisSignalProvider.startPersistenceThread();
+            }
             else
-                for(Filter filter : thisSignalProvider.filters)
-                    filter.startFilter(this);
-            thisSignalProvider.brokers = brokers;
-            thisSignalProvider.startPersistenceThread();
+                thisSignalProvider = new InactiveSignalProvider();
         }
     }
 
@@ -327,10 +334,16 @@ public class SignalProvider extends XMLPersistentObject
                     broker.closeSignal(toClose, toClose.getStrategyId(), toClose.getPair(), toClose.isBuy());
                     any = true;
                 }
+            if(!any)
+                DailyLog.logError("Error cerrando, senal no tenia id de ningun broker "
+                    + toClose.getUniqueIdsMap().toString());
             return any;
         }
         else
+        {
+            DailyLog.logError("Error cerrando, senal no tenia id de proveedor " + toClose.getUniqueIdsMap().toString());
             return false;
+        }
     }
 
     public boolean openManualSignal(Pair pair, boolean buy)
@@ -421,9 +434,9 @@ public class SignalProvider extends XMLPersistentObject
         this.filters = filters;
     }
 
-    public List<StrategySignal> providerSignals()
+    public List <StrategySignal> providerSignals()
     {
-        LinkedList<StrategySignal> all = new LinkedList<StrategySignal>();
+        LinkedList <StrategySignal> all = new LinkedList <StrategySignal>();
         for(StrategySignal signal : Utils.getAllSignals())
             if(signal.getUniqueId(id.toString()) != 0)
                 all.add(signal);

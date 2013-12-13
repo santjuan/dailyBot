@@ -20,18 +20,18 @@ import dailyBot.model.dailyFx.DailyFXStrategySystem;
 
 public class DailyBotMain
 {
-    private static ArrayList<StrategySystem> systems;
+    private static ArrayList <StrategySystem> systems;
 
-    private static Class<?>[] systemClasses = { DailyFXStrategySystem.class };
+    private static Class <?>[] systemClasses = { DailyFXStrategySystem.class };
 
     private static void loadStrategySystems()
     {
-        systems = new ArrayList<StrategySystem>();
-        for(Class<?> clazz : systemClasses)
+        systems = new ArrayList <StrategySystem>();
+        for(Class <?> clazz : systemClasses)
         {
             try
             {
-                systems.add((StrategySystem) (clazz.getConstructor(new Class<?>[0]).newInstance(new Object[0])));
+                systems.add((StrategySystem) (clazz.getConstructor(new Class <?>[0]).newInstance(new Object[0])));
             }
             catch(Exception e)
             {
@@ -272,6 +272,8 @@ public class DailyBotMain
 
     public static void main(String[] args) throws IOException
     {
+        if(args.length >= 1 && args[0] != null && args[0].equals("testing"))
+            DailyProperties.setTesting(true);
         try
         {
             Runtime.getRuntime().exec(DailyProperties.getProperty("dailyBot.control.DailyBotMain.linuxCheck"));
@@ -309,6 +311,8 @@ public class DailyBotMain
                 {
                     DailyThreadInfo.registerUpdate("initial thread", "RMI state", "starting RMI connection");
                     String name = "Conexion";
+                    if(DailyProperties.isTesting())
+                        name += "_testing";
                     RMIServerConnection connection = new RMIServerConnection();
                     RMIConnection stub = (RMIConnection) UnicastRemoteObject.exportObject(connection, 0);
                     Registry registry = LocateRegistry.getRegistry(DailyProperties

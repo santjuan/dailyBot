@@ -1,6 +1,7 @@
 package dailyBot.control.connection;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -156,9 +157,15 @@ public class ChatConnection
                                     pair = possiblePair;
                         }
                         boolean closed = false;
+                        boolean ok = true;
                         if(strategyId != null && signalProviderId != null && pair != null)
                             closed = signalProviderId.signalProvider().closeSignal(strategyId, pair);
-                        sendMessage(closed + "", true);
+                        else
+                            ok = false;
+                        String answer = closed + " " + ok;
+                        if(!ok)
+                            answer += " " + Arrays.toString(split);
+                        sendMessage(answer, true);
                         any = true;
                     }
                     if(body.contains("manual"))
@@ -228,13 +235,16 @@ public class ChatConnection
     private static final String toAddress = DailyProperties
         .getProperty("dailyBot.control.connection.ChatConnection.emailTo");
     private static Chat currentChat;
-    private static final String username = DailyProperties
+    private static final String username = DailyProperties.isTesting() ? DailyProperties
+        .getProperty("dailyBot.control.connection.ChatConnection.emailFrom_testing") : DailyProperties
         .getProperty("dailyBot.control.connection.ChatConnection.emailFrom");
     private static final AtomicLong connectionCount = new AtomicLong();
     private static final AtomicLong lastConnection = new AtomicLong();
 
     public static void sendMessage(String message, boolean send)
     {
+        if(DailyProperties.isTesting())
+            message = "TESTING\n" + message;
         message += "\nMESSAGE END\n";
         try
         {

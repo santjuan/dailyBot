@@ -3,6 +3,7 @@ package dailyBot.control;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DailyProperties
 {
@@ -28,5 +29,17 @@ public class DailyProperties
     public static String getProperty(String property)
     {
         return properties.getProperty(property);
+    }
+
+    private static final AtomicBoolean testing = new AtomicBoolean(false);
+
+    public static boolean isTesting()
+    {
+        return testing.get();
+    }
+
+    public static void setTesting(boolean isTesting)
+    {
+        testing.set(isTesting);
     }
 }

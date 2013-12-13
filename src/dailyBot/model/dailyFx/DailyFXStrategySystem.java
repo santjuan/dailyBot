@@ -77,7 +77,7 @@ public class DailyFXStrategySystem extends StrategySystem
                         System.gc();
                         DailyThreadInfo.registerThreadLoop("DailyFX updater");
                         checkConsistency();
-                        DailyThread.sleep(1000);
+                        DailyThread.sleep(DailyProperties.isTesting() ? 10000L : 1000L);
                         DailyThreadInfo.registerUpdate("DailyFX updater", "State", "reading from DailyFX server");
                         String[] read = DailyFxServerConnection.readDailyFxServer();
                         DailyThreadInfo.registerThreadLoop("DailyFX updater last read string");
@@ -169,18 +169,18 @@ public class DailyFXStrategySystem extends StrategySystem
         DailyThreadAdmin.addThread(persistenceThread);
     }
 
-    public static final AtomicReference<Vector<StrategySignal>> lastRead = new AtomicReference<Vector<StrategySignal>>();
+    public static final AtomicReference <Vector <StrategySignal>> lastRead = new AtomicReference <Vector <StrategySignal>>();
     public static final AtomicLong lastReadTime = new AtomicLong();
 
     @Override
-    protected ArrayList<StrategySignal> read(String[] input)
+    protected ArrayList <StrategySignal> read(String[] input)
     {
         try
         {
             DailyThreadInfo.registerUpdate("DailyFX updater", "Read state", "reading from DailyFX server");
-            ArrayList<StrategySignal> read = dailyJSON.leer(input[0]);
+            ArrayList <StrategySignal> read = dailyJSON.leer(input[0]);
             DailyThreadInfo.registerUpdate("DailyFX updater", "Read state", "readed JSON without errors");
-            lastRead.set(new Vector<StrategySignal>(read));
+            lastRead.set(new Vector <StrategySignal>(read));
             lastReadTime.set(System.currentTimeMillis());
             return read;
         }
@@ -213,7 +213,7 @@ public class DailyFXStrategySystem extends StrategySystem
                     }
                 }
             }
-            ArrayList<StrategySignal> readSignals = read(read);
+            ArrayList <StrategySignal> readSignals = read(read);
             DailyThreadInfo.registerUpdate("DailyFX updater", "Processing state", "processing readed signals");
             DailyThreadInfo.registerThreadLoop("DailyFX updater last read objects");
             String readLog = "";
@@ -265,7 +265,7 @@ public class DailyFXStrategySystem extends StrategySystem
                         }
                         else
                         {
-                            if(profit >= 75)
+                            if(profit >= 50)
                             {
                                 double stop = affected.getPair().getCurrentPriceMinus(75, affected.isBuy());
                                 if(affected.getPair().differenceInPips(stop, affected.getStop(), affected.isBuy()) > 0)
@@ -328,7 +328,7 @@ public class DailyFXStrategySystem extends StrategySystem
                 DailyThreadInfo.registerUpdate("DailyFX updater", "Processing state",
                     "processing strategy, checking stops: " + strategyId);
                 current.checkStops();
-                List<StrategySignal> signalsList = current.duplicateSignals();
+                List <StrategySignal> signalsList = current.duplicateSignals();
                 for(StrategySignal signal : signalsList)
                 {
                     DailyThreadInfo.registerUpdate("DailyFX updater", "Processing state existing signals",

@@ -14,8 +14,8 @@ import javax.swing.JOptionPane;
 
 import dailyBot.control.connection.ChatConnection;
 import dailyBot.control.connection.EmailConnection;
-import dailyBot.model.Strategy.StrategyId;
 import dailyBot.model.SignalProvider.SignalProviderId;
+import dailyBot.model.Strategy.StrategyId;
 
 public class DailyLog
 {
@@ -123,7 +123,7 @@ public class DailyLog
         ExecutorService executor = Executors.newSingleThreadExecutor();
         for(final SignalProviderId signalProviderId : SignalProviderId.values())
         {
-            Future<Boolean> writer = executor.submit(new Callable<Boolean>()
+            Future <Boolean> writer = executor.submit(new Callable <Boolean>()
             {
                 @Override
                 public Boolean call() throws Exception
@@ -143,7 +143,7 @@ public class DailyLog
         }
         for(final StrategyId strategyId : StrategyId.values())
         {
-            Future<Boolean> writer = executor.submit(new Callable<Boolean>()
+            Future <Boolean> writer = executor.submit(new Callable <Boolean>()
             {
                 @Override
                 public Boolean call() throws Exception
@@ -181,7 +181,7 @@ public class DailyLog
             DailyLog.logError(message);
             sendAcummulated();
             DailyThread.sleep(180000);
-            Runtime.getRuntime().exec("shutdown now -r");
+            Runtime.getRuntime().exec("sudo reboot");
             System.exit(0);
             throw(new RuntimeException());
         }

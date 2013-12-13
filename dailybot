@@ -1,0 +1,3 @@
+#!/bin/bash
+# replace user by your user
+su user -c "bash -c '/etc/init.d/dailybot $1'"

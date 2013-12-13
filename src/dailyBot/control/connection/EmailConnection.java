@@ -83,6 +83,8 @@ public class EmailConnection
 
     public static void sendEmail(String subject, String message)
     {
+        if(DailyProperties.isTesting())
+            message = "TESTING\n" + message;
         executor.submit(new MessageSenderHelper(subject, message));
     }
 }

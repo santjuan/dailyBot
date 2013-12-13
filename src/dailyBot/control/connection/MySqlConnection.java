@@ -24,16 +24,16 @@ import com.mysql.jdbc.Driver;
 import dailyBot.analysis.SignalHistoryRecord;
 import dailyBot.analysis.StatisticsUtils.PairHistory;
 import dailyBot.control.DailyLog;
-import dailyBot.control.DailyThread;
 import dailyBot.control.DailyProperties;
+import dailyBot.control.DailyThread;
 import dailyBot.model.Pair;
-import dailyBot.model.StrategySignal;
 import dailyBot.model.Strategy.StrategyId;
+import dailyBot.model.StrategySignal;
 
 public class MySqlConnection
 {
     private static AtomicInteger connectionCount = new AtomicInteger();
-    private static LinkedBlockingQueue<Connection> connectionPool = startPool();
+    private static LinkedBlockingQueue <Connection> connectionPool = startPool();
 
     private static void close(ResultSet resultSet)
     {
@@ -227,6 +227,17 @@ public class MySqlConnection
 
     public static double[] getPairData(Pair pair, Calendar date)
     {
+        if(!ATRCreated.get())
+        {
+            synchronized(MySqlConnection.class)
+            {
+                if(!ATRCreated.get())
+                {
+                    ATRCreated.set(true);
+                    executeSql(createTableATR);
+                }
+            }
+        }
         String dateString = formatDate(date);
         Connection connection = getConnection();
         Statement statement = null;
@@ -267,13 +278,14 @@ public class MySqlConnection
 
     static class PairHistoryCache
     {
-        private static EnumMap<Pair, TreeMap<Date, PairHistory>> cache = getCache();
+        private static EnumMap <Pair, TreeMap <Date, PairHistory>> cache = getCache();
 
-        static synchronized EnumMap<Pair, TreeMap<Date, PairHistory>> getCache()
+        static synchronized EnumMap <Pair, TreeMap <Date, PairHistory>> getCache()
         {
-            EnumMap<Pair, TreeMap<Date, PairHistory>> cache = new EnumMap<Pair, TreeMap<Date, PairHistory>>(Pair.class);
+            EnumMap <Pair, TreeMap <Date, PairHistory>> cache = new EnumMap <Pair, TreeMap <Date, PairHistory>>(
+                Pair.class);
             for(Pair pair : Pair.values())
-                cache.put(pair, new TreeMap<Date, PairHistory>());
+                cache.put(pair, new TreeMap <Date, PairHistory>());
             Connection connection = getConnection();
             Statement statement = null;
             ResultSet resultSet = null;
@@ -315,7 +327,7 @@ public class MySqlConnection
             return cache;
         }
 
-        static synchronized SortedMap<Date, PairHistory> getUpUntil(Pair pair, Date until)
+        static synchronized SortedMap <Date, PairHistory> getUpUntil(Pair pair, Date until)
         {
             if(cache.get(pair).tailMap(until).isEmpty())
                 cache = getCache();
@@ -323,7 +335,7 @@ public class MySqlConnection
         }
     }
 
-    public static SortedMap<Date, PairHistory> getPairHistory(Pair pair, Date date)
+    public static SortedMap <Date, PairHistory> getPairHistory(Pair pair, Date date)
     {
         return PairHistoryCache.getUpUntil(pair, date);
     }
@@ -413,7 +425,7 @@ public class MySqlConnection
         }
     }
 
-    public static List<SignalHistoryRecord> getRecords()
+    public static List <SignalHistoryRecord> getRecords()
     {
         if(!signalHistoryRecordCreated.get())
         {
@@ -434,7 +446,7 @@ public class MySqlConnection
             statement = connection.createStatement();
             statement.setQueryTimeout(60);
             resultSet = statement.executeQuery("select * from SignalHistoryRecord");
-            LinkedList<SignalHistoryRecord> newEntries = new LinkedList<SignalHistoryRecord>();
+            LinkedList <SignalHistoryRecord> newEntries = new LinkedList <SignalHistoryRecord>();
             while(resultSet.next())
                 newEntries.add(new SignalHistoryRecord(StrategyId.values()[resultSet.getInt("StrategyId")], Pair
                     .values()[resultSet.getInt("Pair")], resultSet.getInt("IsBuy") == 1, resultSet.getTimestamp(
@@ -455,7 +467,7 @@ public class MySqlConnection
             {
             }
             connection = null;
-            return new LinkedList<SignalHistoryRecord>();
+            return new LinkedList <SignalHistoryRecord>();
         }
         finally
         {
@@ -469,6 +481,8 @@ public class MySqlConnection
     {
         String dbConnectionString = DailyProperties
             .getProperty("dailyBot.control.connection.MySqlConnection.DBAddress");
+        if(DailyProperties.isTesting())
+            dbConnectionString += "_testing";
         String dbUserId = DailyProperties.getProperty("dailyBot.control.connection.MySqlConnection.DBUsername");
         String dbPassword = DailyProperties.getProperty("dailyBot.control.connection.MySqlConnection.DBPassword");
         for(int intento = 0; intento < 11; intento++)
@@ -495,9 +509,9 @@ public class MySqlConnection
         return null;
     }
 
-    private static LinkedBlockingQueue<Connection> startPool()
+    private static LinkedBlockingQueue <Connection> startPool()
     {
-        LinkedBlockingQueue<Connection> newPool = new LinkedBlockingQueue<Connection>();
+        LinkedBlockingQueue <Connection> newPool = new LinkedBlockingQueue <Connection>();
         int connectionNumber = Integer.parseInt(DailyProperties
             .getProperty("dailyBot.control.connection.MySqlConnection.DBNumberOfConnections"));
         for(int i = 0; i < connectionNumber; i++)

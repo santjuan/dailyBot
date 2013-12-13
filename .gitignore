@@ -1,7 +1,9 @@
 dailyBotRelease.conf
 dailyBot.jar
-runDailyBot.sh
+dailyBot_testing.jar
 runOctave.sh
 octave/
 logs/log*.txt
 bin/
+dailybotpid
+dailybottestingpid

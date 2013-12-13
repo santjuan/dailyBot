@@ -1,6 +1,7 @@
 package dailyBot.control.connection.zulutrade;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicLong;
@@ -126,18 +127,10 @@ public class ZulutradeConnection implements Broker
     {
         try
         {
-            ArrayList<ZulutradeSignal> all = new ArrayList<ZulutradeSignal>();
+            ArrayList <ZulutradeSignal> all = new ArrayList <ZulutradeSignal>();
             for(NewMarketTradeResponseMessage marketTrade : new InstantZulutradeConnection(id).tradingGateway
                 .getOpenTrades().getOpenPositions())
-            {
-                try
-                {
-                    all.add(new ZulutradeSignal(marketTrade));
-                }
-                catch(Exception e)
-                {
-                }
-            }
+                all.add(new ZulutradeSignal(marketTrade));
             return all.toArray(new ZulutradeSignal[0]);
         }
         catch(Exception e)
@@ -266,7 +259,7 @@ public class ZulutradeConnection implements Broker
         try
         {
             ZulutradeSignal[] signals = listOpenSignals();
-            TreeSet<Long> ids = new TreeSet<Long>();
+            TreeSet <Long> ids = new TreeSet <Long>();
             for(ZulutradeSignal s : signals)
                 ids.add(s.uniqueId);
             StrategySignal[] strategySignals = Utils.getAllSignals();
@@ -275,7 +268,9 @@ public class ZulutradeConnection implements Broker
                 if(signal != null && signal.getUniqueId("zulutrade-" + id.toString()) != 0
                     && !ids.contains(signal.getUniqueId("zulutrade-" + id.toString())))
                 {
-                    DailyLog.logError("Senal: " + signal + ", no existia realmente en zulutrade, quitando id");
+                    DailyLog.logError("Senal: " + signal
+                        + ", no existia realmente en zulutrade, quitando id. Senales existentes: "
+                        + Arrays.toString(signals));
                     signal.setUniqueId("zulutrade-" + id.toString(), 0L);
                 }
                 else if(signal != null && signal.getUniqueId("zulutrade-" + id.toString()) != 0)
@@ -315,7 +310,7 @@ public class ZulutradeConnection implements Broker
         try
         {
             ZulutradeSignal[] signals = listOpenSignals();
-            TreeMap<Long, ZulutradeSignal> ids = new TreeMap<Long, ZulutradeSignal>();
+            TreeMap <Long, ZulutradeSignal> ids = new TreeMap <Long, ZulutradeSignal>();
             for(ZulutradeSignal s : signals)
                 ids.put(s.uniqueId, s);
             StrategySignal[] strategySignals = Utils.getAllSignals();

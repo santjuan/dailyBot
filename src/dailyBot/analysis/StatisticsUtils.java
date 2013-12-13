@@ -28,12 +28,12 @@ public class StatisticsUtils
         }
     }
 
-    public static double calculateEMA(ArrayList<Double> values, int period)
+    public static double calculateEMA(ArrayList <Double> values, int period)
     {
         double ema = 0;
-        for(int i = 0; i < 14; i++)
+        for(int i = 0; i < Math.min(values.size(), 14); i++)
             ema += values.get(i);
-        ema /= 14;
+        ema /= Math.min(values.size(), 14);
         double alpha = 2.0d / (period + 1.0d);
         for(int i = 14; i < values.size(); i++)
             ema = alpha * values.get(i) + (1 - alpha) * ema;
@@ -42,8 +42,8 @@ public class StatisticsUtils
 
     public static double calculateATR(Pair pair, int period, long closingDate)
     {
-        ArrayList<Double> values = new ArrayList<Double>();
-        SortedMap<Date, PairHistory> map = MySqlConnection.getPairHistory(pair, new Date(closingDate));
+        ArrayList <Double> values = new ArrayList <Double>();
+        SortedMap <Date, PairHistory> map = MySqlConnection.getPairHistory(pair, new Date(closingDate));
         double lastClose = 0;
         int i = 0;
         for(PairHistory actual : map.values())
@@ -69,8 +69,8 @@ public class StatisticsUtils
 
     public static double calculateRSI(Pair pair, int period, long closingDate)
     {
-        ArrayList<Double> values = new ArrayList<Double>();
-        SortedMap<Date, PairHistory> map = MySqlConnection.getPairHistory(pair, new Date(closingDate));
+        ArrayList <Double> values = new ArrayList <Double>();
+        SortedMap <Date, PairHistory> map = MySqlConnection.getPairHistory(pair, new Date(closingDate));
         double lastClose = 0;
         int i = 0;
         for(PairHistory actual : map.values())

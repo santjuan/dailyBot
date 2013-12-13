@@ -7,6 +7,7 @@ import java.rmi.registry.Registry;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.WindowConstants;
 
 import dailyBot.control.DailyBotMain;
@@ -96,7 +97,9 @@ public class RMIClientMain extends JFrame
             System.setSecurityManager(new SecurityManager());
         try
         {
-            String name = "Conexion";
+            String name = "Conexion"
+                + ((JOptionPane.showConfirmDialog(null, "Desea conectarse al servicio de prueba") == JOptionPane.YES_OPTION) ? "_testing"
+                    : "");
             Registry registry = LocateRegistry.getRegistry(DailyProperties
                 .getProperty("dailyBot.view.RMIClientMain.RMIAddress"));
             connection = new RMIServerConnection.Local((RMIConnection) registry.lookup(name));
