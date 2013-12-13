@@ -1,3 +1,4 @@
 #!/bin/bash
-# replace user by your user
-su user -c "bash -c '/etc/init.d/dailybot $1'"
+#change user for your user. 
+#Put this script and dailybot_aux in /etc/init.d and register this script as a service.
+sudo -u user /etc/init.d/dailybot_aux $1
