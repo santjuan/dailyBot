@@ -38,8 +38,7 @@ public class RMIClientMain extends JFrame
         setLayout(gridLayout);
         setSize(259, 290);
         for(StrategyId id : StrategyId.values())
-            if(id != StrategyId.JOEL && id != StrategyId.TECHNICAL)
-                this.add(getStrategyButton(id));
+            this.add(getStrategyButton(id));
         for(SignalProviderId id : SignalProviderId.values())
             this.add(getSignalProviderButton(id));
         JButton salir = new JButton();

@@ -17,6 +17,7 @@ import com.zulutrade.trading.dtos.UpdateValueResponseMessage;
 
 import dailyBot.control.DailyLog;
 import dailyBot.control.DailyProperties;
+import dailyBot.control.DailyThread;
 import dailyBot.model.Broker;
 import dailyBot.model.Pair;
 import dailyBot.model.SignalProvider.SignalProviderId;
@@ -202,10 +203,17 @@ public class ZulutradeConnection implements Broker
         }
     }
 
-    public ZulutradeSignal openTrade(Pair currency, boolean isBuy, double limit, double stop) throws ZulutradeException
+    private final AtomicLong lastOpened = new AtomicLong(0);
+
+    public synchronized ZulutradeSignal openTrade(Pair currency, boolean isBuy, double limit, double stop)
+        throws ZulutradeException
     {
         try
         {
+            long difference = System.currentTimeMillis() - lastOpened.get();
+            if(difference >= 0 && difference < 16000)
+                DailyThread.sleep(16000 - difference);
+            lastOpened.set(System.currentTimeMillis());
             long uniqueId = Long.parseLong(UniqueIdGenerator.getNextUniqueId());
             ZulutradeSignal answer = new ZulutradeSignal(new InstantZulutradeConnection(id).tradingGateway.openMarket(
                 currency.toString().substring(0, 3) + "/" + currency.toString().substring(3), 1, isBuy,
@@ -222,7 +230,6 @@ public class ZulutradeConnection implements Broker
             if(signal == null)
                 throw new ZulutradeException(new Exception("Not possible to open: " + answer));
             return signal;
-
         }
         catch(Exception e)
         {
@@ -271,21 +278,33 @@ public class ZulutradeConnection implements Broker
                     DailyLog.logError("Senal: " + signal
                         + ", no existia realmente en zulutrade, quitando id. Senales existentes: "
                         + Arrays.toString(signals));
+                    signal.setUniqueId("zulutrade-" + id.toString() + "-old",
+                        signal.getUniqueId("zulutrade-" + id.toString()));
                     signal.setUniqueId("zulutrade-" + id.toString(), 0L);
                 }
                 else if(signal != null && signal.getUniqueId("zulutrade-" + id.toString()) != 0)
                 {
                     if(signal.getPair().differenceInPips(signal.getStop(), signal.isBuy()) < 0
-                        && Math.abs(signal.getStop()) > 1e-5d)
+                        && Math.abs(signal.getStop()) > 1e-5d
+                        && ((signal.getLotNumber() < 4) || (signal.getPair().differenceInPips(signal.getStop(),
+                            signal.stopDaily(), signal.isBuy()) > 0)))
                     {
                         closeSignal(signal, signal.getStrategyId(), signal.getPair(), signal.isBuy());
                         DailyLog.logError("Senal: " + signal + " toco stop, cerrando. Precio actual = "
                             + signal.getPair().getCurrentPrice(signal.isBuy()));
-                        if(signal != null)
-                            signal.setStopTouched(true);
+                        signal.setStopTouched(true);
                     }
                     else
                         signal.setUniqueId("zulutrade-" + id.toString() + "-lastchecktime", System.currentTimeMillis());
+                }
+                else if(signal != null && signal.getUniqueId("zulutrade-" + id.toString() + "-old") != 0
+                    && ids.contains(signal.getUniqueId("zulutrade-" + id.toString() + "-old")))
+                {
+                    DailyLog.logError("Senal: " + signal + ", volvio a aparecer, restaurando: "
+                        + Arrays.toString(signals));
+                    signal.setUniqueId("zulutrade-" + id.toString(),
+                        signal.getUniqueId("zulutrade-" + id.toString() + "-old"));
+                    signal.setUniqueId("zulutrade-" + id.toString() + "-old", 0L);
                 }
             }
         }
@@ -332,13 +351,17 @@ public class ZulutradeConnection implements Broker
                     messages += "Magico zulutrade = 0\n";
                 }
             }
+            if(sendMessage)
+                DailyLog.logInfo(messages);
+            messages = "";
             for(ZulutradeSignal signal : ids.values())
             {
                 messages += "\n";
                 messages += signal.uniqueId + "\n";
                 messages += signal + " abierta manualmente.\n";
             }
-            DailyLog.logInfo(messages);
+            if(!messages.trim().isEmpty())
+                DailyLog.logInfo(messages);
             return messages;
         }
         catch(Exception e)

@@ -93,7 +93,7 @@ public class Utils
         if(id == null)
             signals.addAll(Arrays.asList(getAllSignals()));
         else
-            signals.addAll(id.strategy().getSignals());
+            signals.addAll(id.strategy().duplicateSignals());
         return (signals.isEmpty() ? "NO SIGNALS" : sendSignalTable(signals)) + "\n";
     }
 }

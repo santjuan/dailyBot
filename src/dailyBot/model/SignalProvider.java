@@ -65,14 +65,14 @@ public class SignalProvider extends XMLPersistentObject
         }, false);
 
         volatile transient SignalProvider thisSignalProvider = null;
-        volatile transient Broker[] brokers;
+        volatile transient BrokerFactory brokerFactory;
         volatile transient FilterFactory filterFactory;
         volatile transient boolean inTesting;
 
-        private SignalProviderId(FilterFactory filter, BrokerFactory brokerFactory, boolean testing)
+        private SignalProviderId(FilterFactory filter, BrokerFactory broker, boolean testing)
         {
             filterFactory = filter;
-            brokers = brokerFactory.getBrokers(this);
+            brokerFactory = broker;
             this.inTesting = testing;
         }
 
@@ -95,7 +95,7 @@ public class SignalProvider extends XMLPersistentObject
                 else
                     for(Filter filter : thisSignalProvider.filters)
                         filter.startFilter(this);
-                thisSignalProvider.brokers = brokers;
+                thisSignalProvider.brokers = brokerFactory.getBrokers(this);
                 thisSignalProvider.startPersistenceThread();
             }
             else
@@ -124,7 +124,7 @@ public class SignalProvider extends XMLPersistentObject
         return answer;
     }
 
-    private void startPersistenceThread()
+    protected void startPersistenceThread()
     {
         DailyThread persistenceThread = new DailyThread(new DailyRunnable()
         {
@@ -132,7 +132,7 @@ public class SignalProvider extends XMLPersistentObject
 
             public void run()
             {
-                DailyThread.sleep(120000);
+                DailyThread.sleep(180000);
                 while(true)
                 {
                     if(id.signalProvider() == null || checkConsistency())
@@ -162,11 +162,25 @@ public class SignalProvider extends XMLPersistentObject
                     }
                     setLastUpdate(System.currentTimeMillis());
                     DailyThreadInfo.registerThreadLoop(id.toString() + " checker");
-                    DailyThreadInfo.registerUpdate(id.toString() + " checker", "State", "starting check");
+                    DailyThreadInfo.registerUpdate(id.toString() + " checker", "State", "waiting for market to open");
                     while(DailyBotMain.marketClosed())
                     {
-                        DailyThread.sleep(120000);
+                        DailyThread.sleep(650000);
                         setLastUpdate(System.currentTimeMillis());
+                    }
+                    DailyThreadInfo.registerUpdate(id.toString() + " checker", "State", "checking brokers consistency");
+                    try
+                    {
+                        checkBrokerConsistency();
+                    }
+                    catch(Exception e)
+                    {
+                        DailyLog.logError("Error chequeando consistencia del proveedor " + id);
+                    }
+                    finally
+                    {
+                        DailyThreadInfo.registerUpdate(id.toString() + " checker", "State",
+                            "brokers consistency checked");
                     }
                     Calendar calendar = Calendar.getInstance();
                     int hour = calendar.get(Calendar.HOUR_OF_DAY);
@@ -210,7 +224,8 @@ public class SignalProvider extends XMLPersistentObject
                         }
                         finally
                         {
-                            DailyThreadInfo.registerUpdate(id.toString() + " checker", "State", "check finished");
+                            DailyThreadInfo
+                                .registerUpdate(id.toString() + " checker", "Hourly check", "check finished");
                             DailyThreadInfo.closeThreadLoop(id.toString() + " checker");
                         }
                     }
@@ -291,23 +306,6 @@ public class SignalProvider extends XMLPersistentObject
                 if(broker.getUniqueId(toOpen) == 0L)
                     broker.openSignal(toOpen, toOpen.getStrategyId(), toOpen.getPair(), toOpen.isBuy());
         }
-    }
-
-    public void stopped(StrategySignal signal)
-    {
-        if((!signal.isStopTouched()) && (signal.getUniqueId(id.toString()) != 0L))
-        {
-            DailyLog.logInfoWithTitle("rangos",
-                id + " cerrando por stop " + signal.getStrategyId() + ", " + signal.getPair() + " Precio entrada: "
-                    + signal.getEntryPrice() + " Stop: " + signal.getStop() + " Es compra: " + signal.isBuy());
-            for(Broker broker : brokers)
-                if(broker.getUniqueId(signal) != 0)
-                    broker.closeSignal(signal, signal.getStrategyId(), signal.getPair(), signal.isBuy());
-            signal.setStopTouched(true);
-        }
-        else if(!signal.isStopTouched())
-            DailyLog.logError("Senal con par: " + signal.getPair() + ", estrategia: " + signal.getStrategyId()
-                + ", proveedor " + id + " no existe y se intento cerrar (toco stop).");
     }
 
     public boolean checkConsistency()

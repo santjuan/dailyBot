@@ -27,7 +27,7 @@ public enum Pair
     private transient double low = Double.POSITIVE_INFINITY;
     private transient double open = Double.NEGATIVE_INFINITY;
     private transient Calendar date = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
-    private transient final LinkedList<StrategySignal> signals = new LinkedList<StrategySignal>();
+    private transient final LinkedList <StrategySignal> signals = new LinkedList <StrategySignal>();
     private transient static String message = "";
     private transient static int startNumber = 0;
     private transient final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock(true);
@@ -211,7 +211,8 @@ public enum Pair
         writeB.lock();
         try
         {
-            signals.add(signal);
+            if(!signals.contains(signal))
+                signals.add(signal);
         }
         finally
         {
@@ -224,7 +225,7 @@ public enum Pair
         writeB.lock();
         try
         {
-            for(Iterator<StrategySignal> it = signals.iterator(); it.hasNext();)
+            for(Iterator <StrategySignal> it = signals.iterator(); it.hasNext();)
                 if(signal == it.next())
                     it.remove();
         }

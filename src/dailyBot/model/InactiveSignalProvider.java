@@ -37,11 +37,6 @@ public class InactiveSignalProvider extends SignalProvider
     }
 
     @Override
-    public void stopped(StrategySignal signal)
-    {
-    }
-
-    @Override
     public boolean checkConsistency()
     {
         return false;

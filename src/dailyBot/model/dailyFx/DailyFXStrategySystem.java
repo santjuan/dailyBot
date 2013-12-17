@@ -17,7 +17,6 @@ import dailyBot.control.DailyThread;
 import dailyBot.control.DailyThreadAdmin;
 import dailyBot.control.DailyThreadInfo;
 import dailyBot.control.connection.dailyFx.DailyFxServerConnection;
-import dailyBot.model.SignalProvider.SignalProviderId;
 import dailyBot.model.Strategy;
 import dailyBot.model.Strategy.StrategyId;
 import dailyBot.model.StrategySignal;
@@ -192,31 +191,17 @@ public class DailyFXStrategySystem extends StrategySystem
         }
     }
 
-    static final AtomicLong processCount = new AtomicLong(0);
-
     @Override
     protected void process(String[] read)
     {
         try
         {
-            if(((processCount.incrementAndGet()) % 10) == 0)
-            {
-                for(SignalProviderId signalProviderId : SignalProviderId.values())
-                {
-                    try
-                    {
-                        signalProviderId.signalProvider().checkBrokerConsistency();
-                    }
-                    catch(Exception e)
-                    {
-                        DailyLog.logError("Error chequeando consistencia del proveedor " + signalProviderId);
-                    }
-                }
-            }
             ArrayList <StrategySignal> readSignals = read(read);
             DailyThreadInfo.registerUpdate("DailyFX updater", "Processing state", "processing readed signals");
             DailyThreadInfo.registerThreadLoop("DailyFX updater last read objects");
             String readLog = "";
+            final int trailingStop = Integer.parseInt(DailyProperties
+                .getProperty("dailyBot.model.dailyFx.DailyFXStrategySystem.trailingStop"));
             for(StrategySignal signal : readSignals)
             {
                 DailyThreadInfo.registerUpdate("DailyFX updater", "Processing state current signal",
@@ -265,9 +250,9 @@ public class DailyFXStrategySystem extends StrategySystem
                         }
                         else
                         {
-                            if(profit >= 50)
+                            if(profit >= trailingStop)
                             {
-                                double stop = affected.getPair().getCurrentPriceMinus(75, affected.isBuy());
+                                double stop = affected.getPair().getCurrentPriceMinus(trailingStop, affected.isBuy());
                                 if(affected.getPair().differenceInPips(stop, affected.getStop(), affected.isBuy()) > 0)
                                 {
                                     try
@@ -327,7 +312,6 @@ public class DailyFXStrategySystem extends StrategySystem
                 Strategy current = strategyId.strategy();
                 DailyThreadInfo.registerUpdate("DailyFX updater", "Processing state",
                     "processing strategy, checking stops: " + strategyId);
-                current.checkStops();
                 List <StrategySignal> signalsList = current.duplicateSignals();
                 for(StrategySignal signal : signalsList)
                 {

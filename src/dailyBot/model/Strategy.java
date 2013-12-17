@@ -15,7 +15,7 @@ public class Strategy extends XMLPersistentObject
 {
     public enum StrategyId
     {
-        BREAKOUT1, BREAKOUT2, RANGE1, RANGE2, MOMENTUM1, MOMENTUM2, TECHNICAL, JOEL;
+        BREAKOUT1, BREAKOUT2, RANGE1, RANGE2, MOMENTUM1, MOMENTUM2;
 
         volatile transient Strategy thisStategy = null;
 
@@ -37,7 +37,7 @@ public class Strategy extends XMLPersistentObject
     }
 
     protected StrategyId id;
-    protected List<StrategySignal> signals = new LinkedList<StrategySignal>();
+    protected List <StrategySignal> signals = new LinkedList <StrategySignal>();
     protected final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock(true);
     protected final Lock read = readWriteLock.readLock();
     protected final Lock write = DailyThread.getSafeWriteLock(readWriteLock);
@@ -54,85 +54,46 @@ public class Strategy extends XMLPersistentObject
     public void processSignalChange(Pair pair, boolean hit, boolean buy, int lotNumber, double entryPrice,
         StrategySignal affected)
     {
-        write.lock();
-        try
+        if(hit)
         {
-            if(hit)
+            affected.setLotNumber(affected.getLotNumber() - lotNumber);
+            if(affected.getLotNumber() <= 0)
             {
-                affected.setLotNumber(affected.getLotNumber() - lotNumber);
-                if(affected.getLotNumber() <= 0)
-                {
-                    MySqlConnection.addRecord(id, affected);
-                    for(SignalProviderId signalProviderId : SignalProviderId.values())
-                        signalProviderId.signalProvider().processSignal(affected, hit);
-                    signals.remove(affected);
-                    affected.getPair().deleteSignal(affected);
-                }
-            }
-            else
-            {
-                StrategySignal newSignal = new StrategySignal(id, buy, pair, lotNumber, entryPrice, 0);
-                if(hasPair(pair) != null)
-                {
-                    DailyLog.logError("Error, par: " + pair + ", ya existe en esta estrategia " + id.toString());
-                    return;
-                }
-                signals.add(newSignal);
-                newSignal.getPair().addSignal(newSignal);
+                MySqlConnection.addRecord(id, affected);
                 for(SignalProviderId signalProviderId : SignalProviderId.values())
-                    signalProviderId.signalProvider().processSignal(newSignal, hit);
+                    signalProviderId.signalProvider().processSignal(affected, hit);
+                write.lock();
+                try
+                {
+                    signals.remove(affected);
+                }
+                finally
+                {
+                    write.unlock();
+                }
+                affected.getPair().deleteSignal(affected);
             }
         }
-        finally
+        else
         {
-            write.unlock();
-        }
-    }
-
-    public void checkStops()
-    {
-        read.lock();
-        try
-        {
-            for(StrategySignal affected : signals)
+            StrategySignal newSignal = new StrategySignal(id, buy, pair, lotNumber, entryPrice, 0);
+            if(hasPair(pair) != null)
             {
-                if(Math.abs(affected.getStop()) < 10e-4d)
-                    continue;
-                if(affected.isBuy())
-                {
-                    if((affected.getPair().getCurrentPrice(true) < affected.getStop())
-                        && (affected.getPair().getCurrentPrice(false) < affected.getStop())
-                        && ((affected.getLotNumber() < 4) || (affected.getStop() > affected.stopDaily())))
-                    {
-                        if(!affected.isStopTouched())
-                        {
-                            for(SignalProviderId signalProviderId : SignalProviderId.values())
-                                if(!affected.isStopTouched())
-                                    signalProviderId.signalProvider().stopped(affected);
-                            affected.setStopTouched(true);
-                        }
-                    }
-                }
-                else
-                {
-                    if((affected.getPair().getCurrentPrice(false) > affected.getStop())
-                        && (affected.getPair().getCurrentPrice(true) > affected.getStop())
-                        && ((affected.getLotNumber() < 4) || (affected.getStop() < affected.stopDaily())))
-                    {
-                        if(!affected.isStopTouched())
-                        {
-                            for(SignalProviderId signalProviderId : SignalProviderId.values())
-                                if(!affected.isStopTouched())
-                                    signalProviderId.signalProvider().stopped(affected);
-                            affected.setStopTouched(true);
-                        }
-                    }
-                }
+                DailyLog.logError("Error, par: " + pair + ", ya existe en esta estrategia " + id.toString());
+                return;
             }
-        }
-        finally
-        {
-            read.unlock();
+            write.lock();
+            try
+            {
+                signals.add(newSignal);
+            }
+            finally
+            {
+                write.unlock();
+            }
+            newSignal.getPair().addSignal(newSignal);
+            for(SignalProviderId signalProviderId : SignalProviderId.values())
+                signalProviderId.signalProvider().processSignal(newSignal, hit);
         }
     }
 
@@ -142,16 +103,14 @@ public class Strategy extends XMLPersistentObject
         try
         {
             for(StrategySignal signal : signals)
-            {
                 if(signal.getPair().equals(par))
                     return signal;
-            }
-            return null;
         }
         finally
         {
             read.unlock();
         }
+        return null;
     }
 
     public boolean checkConsistency()
@@ -198,18 +157,15 @@ public class Strategy extends XMLPersistentObject
         }
     }
 
-    public List<StrategySignal> duplicateSignals()
+    public List <StrategySignal> duplicateSignals()
     {
         read.lock();
         try
         {
-            LinkedList<StrategySignal> copiedSignals = new LinkedList<StrategySignal>();
-            copiedSignals.clear();
             if(signals == null)
                 return null;
-            for(StrategySignal signal : signals)
-                copiedSignals.add(signal);
-            return copiedSignals;
+            else
+                return new LinkedList <StrategySignal>(signals);
         }
         finally
         {
@@ -217,7 +173,7 @@ public class Strategy extends XMLPersistentObject
         }
     }
 
-    public List<StrategySignal> getSignals()
+    public List <StrategySignal> getSignals()
     {
         read.lock();
         try
@@ -230,22 +186,22 @@ public class Strategy extends XMLPersistentObject
         }
     }
 
-    public void setSignals(List<StrategySignal> signals)
+    public void setSignals(List <StrategySignal> signals)
     {
         write.lock();
         try
         {
-            this.signals = new LinkedList<StrategySignal>();
-            for(StrategySignal signal : signals)
-            {
-                this.signals.add(signal);
-                signal.getPair().addSignal(signal);
-            }
+            if(signals != null)
+                this.signals = new LinkedList <StrategySignal>(signals);
+            else
+                this.signals = null;
         }
         finally
         {
             write.unlock();
         }
+        for(StrategySignal signal : signals)
+            signal.getPair().addSignal(signal);
     }
 
     public StrategyId getId()

@@ -9,8 +9,8 @@ import javax.swing.JTabbedPane;
 
 import dailyBot.analysis.Utils;
 import dailyBot.model.Filter;
-import dailyBot.model.Strategy.StrategyId;
 import dailyBot.model.SignalProvider.SignalProviderId;
+import dailyBot.model.Strategy.StrategyId;
 
 public class SignalProviderFormat extends JFrame
 {
@@ -37,14 +37,11 @@ public class SignalProviderFormat extends JFrame
         JCheckBox botonActivo = null;
         for(StrategyId id1 : StrategyId.values())
         {
-            if(id1 != StrategyId.JOEL && id1 != StrategyId.TECHNICAL)
-            {
-                PairFormat actual = new PairFormat(signalProviderId, id1, graficaProgreso, graficaHistorial,
-                    botonActivo);
-                if(id1.equals(StrategyId.values()[0]))
-                    botonActivo = (JCheckBox) actual.darBotonActivo();
-                jtp.addTab(id1.toString(), actual);
-            }
+
+            PairFormat actual = new PairFormat(signalProviderId, id1, graficaProgreso, graficaHistorial, botonActivo);
+            if(id1.equals(StrategyId.values()[0]))
+                botonActivo = (JCheckBox) actual.darBotonActivo();
+            jtp.addTab(id1.toString(), actual);
         }
         jtp.setVisible(true);
         setMinimumSize(new Dimension(259, 244));
