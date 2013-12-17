@@ -364,6 +364,8 @@ public class MySqlConnection
                     {
                     }
                     connection = null;
+                    returnConnection(connection);
+                    connection = getConnection();
                 }
                 finally
                 {
@@ -409,6 +411,8 @@ public class MySqlConnection
                     {
                     }
                     connection = null;
+                    returnConnection(connection);
+                    connection = getConnection();
                 }
                 finally
                 {
