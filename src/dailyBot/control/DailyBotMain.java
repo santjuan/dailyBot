@@ -7,6 +7,11 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.TimeZone;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import dailyBot.control.connection.ChatConnection;
 import dailyBot.control.connection.RMIConnection;
@@ -189,6 +194,8 @@ public class DailyBotMain
         DailyThreadAdmin.addThread(pairsThread);
         DailyThread chatThread = new DailyThread(new DailyRunnable()
         {
+            private final ExecutorService executor = Executors.newSingleThreadExecutor();
+
             public void run()
             {
                 DailyThread.sleep(30000);
@@ -199,7 +206,16 @@ public class DailyBotMain
                         DailyThread.sleep(30000);
                         DailyThreadInfo.registerThreadLoop("Chat ping");
                         DailyThreadInfo.registerUpdate("Chat ping", "State", "sending ping");
-                        ChatConnection.sendMessage("", false);
+                        Future <String> future = executor.submit(new Callable <String>()
+                        {
+                            @Override
+                            public String call() throws Exception
+                            {
+                                ChatConnection.sendMessage("", false);
+                                return "";
+                            }
+                        });
+                        future.get(300000, TimeUnit.MILLISECONDS);
                         DailyThreadInfo.registerUpdate("Chat ping", "State", "ping sent");
                     }
                     catch(Exception e)
@@ -211,8 +227,8 @@ public class DailyBotMain
                     finally
                     {
                         DailyThreadInfo.closeThreadLoop("Chat ping");
+                        setLastUpdate(System.currentTimeMillis());
                     }
-                    setLastUpdate(System.currentTimeMillis());
                 }
             }
         }, 360000L);

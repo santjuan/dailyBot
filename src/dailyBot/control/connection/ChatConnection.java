@@ -27,6 +27,8 @@ import dailyBot.model.dailyFx.DailyFXStrategySystem;
 
 public class ChatConnection
 {
+    private static final AtomicLong lastSentHelp = new AtomicLong();
+
     public static final MessageListener listener = new MessageListener()
     {
         @Override
@@ -217,9 +219,14 @@ public class ChatConnection
                     }
                     if(!any)
                     {
-                        String answer = "Comandos validos: chequear hilos\nchequear todos\nchequear zulutrade\nchequear IDESTRATEGIA\ncerrar IDESTRATEGIA IDPROVEEDOR PAR\nlistar MINUTOS\nconsultar IDUNICO ACTUAL\nmanual open IDPROVEEDOR PAIR ISBUY\nmanual close IDPROVEEDOR IDTRADE";
-                        sendMessage(answer, true);
-                        any = true;
+                        if(((System.currentTimeMillis() - lastSentHelp.get()) >= 60000L) || body.contains("help")
+                            || body.contains("ayuda"))
+                        {
+                            String answer = "Comandos validos: chequear hilos\nchequear todos\nchequear zulutrade\nchequear IDESTRATEGIA\ncerrar IDESTRATEGIA IDPROVEEDOR PAR\nlistar MINUTOS\nconsultar IDUNICO ACTUAL\nmanual open IDPROVEEDOR PAIR ISBUY\nmanual close IDPROVEEDOR IDTRADE";
+                            sendMessage(answer, true);
+                            lastSentHelp.set(System.currentTimeMillis());
+                            any = true;
+                        }
                     }
                 }
             }
@@ -241,7 +248,7 @@ public class ChatConnection
     private static final AtomicLong connectionCount = new AtomicLong();
     private static final AtomicLong lastConnection = new AtomicLong();
 
-    public static void sendMessage(String message, boolean send)
+    public static synchronized void sendMessage(String message, boolean send)
     {
         if(DailyProperties.isTesting())
             message = "TESTING\n" + message;
