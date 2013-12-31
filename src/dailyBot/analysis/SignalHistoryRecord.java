@@ -6,7 +6,7 @@ import dailyBot.control.connection.dailyFx.DailyFxServerConnection;
 import dailyBot.model.Pair;
 import dailyBot.model.Strategy.StrategyId;
 
-public class SignalHistoryRecord implements Comparable<SignalHistoryRecord>, Serializable
+public class SignalHistoryRecord implements Comparable <SignalHistoryRecord>, Serializable
 {
     private static final long serialVersionUID = 6580617958872557468L;
 
@@ -87,8 +87,9 @@ public class SignalHistoryRecord implements Comparable<SignalHistoryRecord>, Ser
     {
         double vix = VIX;
         double ssi = Utils.getSSI(this);
+        double atr = ATR;
         double rsi = RSI;
-        return new double[] { vix, ssi, rsi, ATR };
+        return new double[] { vix, ssi, atr, rsi };
     }
 
     public double[] getOutput()

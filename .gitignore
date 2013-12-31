@@ -2,7 +2,9 @@ dailyBotRelease.conf
 dailyBot.jar
 dailyBot_testing.jar
 runOctave.sh
+runNumpy.sh
 octave/
+numpy/
 logs/log*.txt
 bin/
 dailybotpid

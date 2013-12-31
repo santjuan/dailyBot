@@ -15,6 +15,7 @@ import dailyBot.control.DailyThreadInfo;
 import dailyBot.control.connection.XMLPersistentObject;
 import dailyBot.control.connection.zulutrade.ZulutradeConnection;
 import dailyBot.model.Strategy.StrategyId;
+import dailyBot.model.dailyFx.NumpyFilter;
 import dailyBot.model.dailyFx.OctaveFilter;
 
 public class SignalProvider extends XMLPersistentObject
@@ -36,7 +37,9 @@ public class SignalProvider extends XMLPersistentObject
             @Override
             public Filter[] getFilters(SignalProviderId id)
             {
-                return new Filter[] { new BasicFilter() };
+                return new Filter[] { "numpy".equals(DailyProperties
+                    .getProperty("dailyBot.model.SignalProvider.DEMO.filter")) ? new NumpyFilter(id)
+                    : new BasicFilter() };
             }
         }, new BrokerFactory()
         {

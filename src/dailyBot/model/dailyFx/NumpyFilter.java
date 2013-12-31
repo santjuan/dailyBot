@@ -16,7 +16,7 @@ import dailyBot.model.ExternalProcessFilter;
 import dailyBot.model.SignalProvider.SignalProviderId;
 import dailyBot.view.RMIClientMain;
 
-public class OctaveFilter extends ExternalProcessFilter
+public class NumpyFilter extends ExternalProcessFilter
 {
     private static final long serialVersionUID = -1340889518022207051L;
 
@@ -26,19 +26,19 @@ public class OctaveFilter extends ExternalProcessFilter
     @Override
     public void startFilter(SignalProviderId id)
     {
-        this.percentage = Double.parseDouble(DailyProperties.getProperty("dailyBot.model.dailyFx.OctaveFilter."
+        this.percentage = Double.parseDouble(DailyProperties.getProperty("dailyBot.model.dailyFx.NumpyFilter."
             + id.toString() + ".percentage"));
-        this.pips = Integer.parseInt(DailyProperties.getProperty("dailyBot.model.dailyFx.OctaveFilter." + id.toString()
+        this.pips = Integer.parseInt(DailyProperties.getProperty("dailyBot.model.dailyFx.NumpyFilter." + id.toString()
             + ".pips"));
         super.startFilter(id);
     }
 
-    public OctaveFilter()
+    public NumpyFilter()
     {
         super();
     }
 
-    public OctaveFilter(SignalProviderId id)
+    public NumpyFilter(SignalProviderId id)
     {
         super(id);
         startFilter(id);
@@ -61,7 +61,7 @@ public class OctaveFilter extends ExternalProcessFilter
         List <SignalHistoryRecord> list = Utils.getRecords();
         try
         {
-            BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter("octave/matriz.txt"));
+            BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter("numpy/matrix.txt"));
             int total = record.getCharacteristics().length + record.getOutput().length;
             String first = percentage + " " + pips;
             for(int i = 2; i < total; i++)
@@ -110,10 +110,13 @@ public class OctaveFilter extends ExternalProcessFilter
         try
         {
             Process process = Runtime.getRuntime().exec(
-                DailyProperties.getProperty("dailyBot.model.dailyFx.OctaveFilter.command"));
+                DailyProperties.getProperty("dailyBot.model.dailyFx.NumpyFilter.command"));
             process.waitFor();
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String firstOutput = bufferedReader.readLine().trim();
+            String firstOutput = bufferedReader.readLine();
+            if(firstOutput == null)
+                return "NO";
+            firstOutput = firstOutput.trim();
             String secondOutput = bufferedReader.readLine();
             if(secondOutput != null)
                 firstOutput = firstOutput + secondOutput;
@@ -122,14 +125,9 @@ public class OctaveFilter extends ExternalProcessFilter
             map.put(record, answer);
             return firstOutput.toUpperCase();
         }
-        catch(IOException e)
+        catch(Exception e)
         {
             DailyLog.logError("Error de entrada salida en filtroProveedorIA " + e.getMessage());
-            return "";
-        }
-        catch(InterruptedException e)
-        {
-            DailyLog.logError("Error de interrupcion en filtroProveedorIA " + e.getMessage());
             return "";
         }
     }
