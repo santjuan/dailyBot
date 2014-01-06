@@ -102,7 +102,7 @@ public class NumpyFilter extends ExternalProcessFilter
     }
 
     public static synchronized String process(SignalHistoryRecord record, double percentage, int pips,
-        TreeMap <SignalHistoryRecord, Boolean> map)
+        TreeMap <SignalHistoryRecord, Boolean> map, SignalProviderId id)
     {
         if(!RMIClientMain.server)
             return "";
@@ -122,6 +122,15 @@ public class NumpyFilter extends ExternalProcessFilter
                 firstOutput = firstOutput + secondOutput;
             firstOutput = firstOutput.trim();
             boolean answer = firstOutput.compareToIgnoreCase("YES") == 0;
+            if(answer)
+            {
+                double percentageOctave = Double.parseDouble(DailyProperties.getProperty("dailyBot.model.dailyFx.OctaveFilter."
+                        + id.toString() + ".percentage"));
+                int pipsOctave = Integer.parseInt(DailyProperties.getProperty("dailyBot.model.dailyFx.OctaveFilter." + id.toString()
+                        + ".pips"));
+                firstOutput = OctaveFilter.process(record, percentageOctave, pipsOctave, new TreeMap <SignalHistoryRecord, Boolean>());
+                answer = firstOutput.compareToIgnoreCase("YES") == 0;
+            }
             map.put(record, answer);
             return firstOutput.toUpperCase();
         }
@@ -135,7 +144,7 @@ public class NumpyFilter extends ExternalProcessFilter
     @Override
     protected String process(SignalHistoryRecord record)
     {
-        return process(record, percentage, pips, map);
+        return process(record, percentage, pips, map, id);
     }
 
     public double getPercentage()

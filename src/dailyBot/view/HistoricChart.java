@@ -28,10 +28,10 @@ public class HistoricChart extends JFrame
     private JLabel pipsAverageGraph;
     private JLabel monthsGraph;
     private Filter filter;
-    private List<SignalHistoryRecord> records;
+    private List <SignalHistoryRecord> records;
     private SignalProviderId signalProviderId;
 
-    public HistoricChart(Filter filter, List<SignalHistoryRecord> records, String title,
+    public HistoricChart(Filter filter, List <SignalHistoryRecord> records, String title,
         SignalProviderId signalProviderId)
     {
         super(title);
@@ -66,12 +66,11 @@ public class HistoricChart extends JFrame
         Calendar actual = fecha1;
         int acumuladoActual = 0;
         Calendar temp = Calendar.getInstance();
-        Calendar twoYears = Calendar.getInstance();
-        twoYears.add(Calendar.YEAR, -2);
+        Calendar now = Calendar.getInstance();
         int cuentaActual = 0;
         for(SignalHistoryRecord registro : records)
         {
-            if(registro.openDate < twoYears.getTimeInMillis())
+            if(now.getTimeInMillis() - registro.openDate > (12L * 30L * 24L * 60L * 60L * 1000L))
                 continue;
             if(filter.filter(registro, false, "", signalProviderId))
             {
