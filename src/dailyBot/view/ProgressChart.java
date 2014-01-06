@@ -26,18 +26,18 @@ public class ProgressChart extends JPanel
 
     private InfoPanel info;
     private JLabel label;
-    private List <SignalHistoryRecord> records;
+    private List<SignalHistoryRecord> records;
     private Filter filter;
     private SignalProviderId signalProviderId = null;
 
-    public ProgressChart(Filter filter, List <SignalHistoryRecord> records, SignalProviderId signalProviderId)
+    public ProgressChart(Filter filter, List<SignalHistoryRecord> records, SignalProviderId signalProviderId)
     {
         this(filter, records);
         this.signalProviderId = signalProviderId;
         updateProgressChart();
     }
 
-    public ProgressChart(Filter filter, List <SignalHistoryRecord> records)
+    public ProgressChart(Filter filter, List<SignalHistoryRecord> records)
     {
         this.filter = filter;
         this.records = records;
@@ -81,18 +81,8 @@ public class ProgressChart extends JPanel
         double media = acum / nTransacciones;
         double desviacionD = 0;
         for(SignalHistoryRecord r : records)
-            try
-            {
-                if(signalProviderId != null
-                    && RMIClientMain.connection.getActiveSignalProvider(signalProviderId.ordinal(), r.id.ordinal(),
-                        r.pair.ordinal())
-                    && ((actual - r.openDate) <= (12L * 30L * 24L * 60L * 60L * 1000L) && filter.filter(r, false, "",
-                        signalProviderId)))
-                    desviacionD += (r.profit - media) * (r.profit - media);
-            }
-            catch(RemoteException e)
-            {
-            }
+            if(filter.filter(r, false, "", signalProviderId))
+                desviacionD += (r.profit - media) * (r.profit - media);
         desviacionD /= nTransacciones;
         desviacionD = Math.sqrt(desviacionD);
         info.profit.setText(acum + "");
@@ -105,7 +95,7 @@ public class ProgressChart extends JPanel
             : " ";
         String espaciosA = espacios;
         espacios += "( " + (porcentaje == 100 ? "" : " ") + porcentaje + "%  )";
-        info.transactionNumber.setText(espaciosA + nTransacciones + " / " + totalTransacciones + espacios);
+        info.transactionNumber.setText(espaciosA + nTransacciones + " / " + totalTransacciones);
         info.deviation.setText(df.format(desviacionD));
         XYSeriesCollection xySeriesCollection = new XYSeriesCollection(series);
         JFreeChart chart = ChartFactory.createXYAreaChart("Ganancia vs tiempo", "Ganancia", "Tiempo",
@@ -113,7 +103,7 @@ public class ProgressChart extends JPanel
         label.setIcon(new ImageIcon(chart.createBufferedImage(600, 350)));
     }
 
-    public List <SignalHistoryRecord> getRecords()
+    public List<SignalHistoryRecord> getRecords()
     {
         return records;
     }

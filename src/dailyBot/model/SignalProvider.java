@@ -37,7 +37,9 @@ public class SignalProvider extends XMLPersistentObject
             @Override
             public Filter[] getFilters(SignalProviderId id)
             {
-                return new Filter[] { new BasicFilter() };
+                return new Filter[] { "numpy".equals(DailyProperties
+                    .getProperty("dailyBot.model.SignalProvider.DEMO.filter")) ? new NumpyFilter(id)
+                    : new BasicFilter() };
             }
         }, new BrokerFactory()
         {
@@ -54,8 +56,7 @@ public class SignalProvider extends XMLPersistentObject
             {
                 return new Filter[] { "octave".equals(DailyProperties
                     .getProperty("dailyBot.model.SignalProvider.DAILYBOTSSIEURO.filter")) ? new OctaveFilter(id)
-                    : ("numpy".equals(DailyProperties
-                            .getProperty("dailyBot.model.SignalProvider.DAILYBOTSSIEURO.filter")) ? new NumpyFilter(id) : new BasicFilter()) };
+                    : new BasicFilter() };
             }
         }, new BrokerFactory()
         {
@@ -84,7 +85,7 @@ public class SignalProvider extends XMLPersistentObject
                 DailyLog.logError("Proveedor " + this + " fue llamado antes de ser registrado.");
             return thisSignalProvider;
         }
- 
+
         public synchronized void startSignalProvider()
         {
             if(DailyProperties.isTesting() == inTesting)
@@ -92,16 +93,7 @@ public class SignalProvider extends XMLPersistentObject
                 thisSignalProvider = SignalProvider.loadPersistence(this);
                 if(thisSignalProvider == null)
                     thisSignalProvider = new SignalProvider(this);
-                String filterClass = DailyProperties
-                        .getProperty("dailyBot.model.SignalProvider." + this + ".filter");
-                if(filterClass == null)
-                	filterClass = "basic";
-                boolean ok = false;
-                if(thisSignalProvider.filters != null)
-                	for(Filter f : thisSignalProvider.filters)
-                		if(f.getClass().toString().toLowerCase().contains(filterClass.toLowerCase()))
-                			ok = true;
-                if((!ok) || (thisSignalProvider.filters == null))
+                if(thisSignalProvider.filters == null)
                     thisSignalProvider.filters = filterFactory.getFilters(this);
                 else
                     for(Filter filter : thisSignalProvider.filters)
