@@ -29,7 +29,7 @@ public class DailyFXStrategySystem extends StrategySystem
 
     public DailyFXStrategySystem()
     {
-        strategies = new StrategyId[] { StrategyId.BREAKOUT1, StrategyId.BREAKOUT1, StrategyId.RANGE1,
+        strategies = new StrategyId[] { StrategyId.BREAKOUT1, StrategyId.BREAKOUT2, StrategyId.RANGE1,
             StrategyId.RANGE2, StrategyId.MOMENTUM1, StrategyId.MOMENTUM2 };
     }
 
