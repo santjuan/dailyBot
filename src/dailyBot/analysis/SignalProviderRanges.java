@@ -16,14 +16,14 @@ public class SignalProviderRanges extends Ranges
     }
 
     @Override
-    public boolean fulfills(SignalHistoryRecord record, boolean ignoreInfo, String sendMessage)
+    public boolean fulfills(SignalHistoryRecord record)
     {
         try
         {
             if(id == null
                 || RMIClientMain.connection.getActiveSignalProvider(id.ordinal(), record.id.ordinal(),
-                    record.pair.ordinal()))
-                return RMIClientMain.connection.getFilterSignalProvider(id.ordinal()).filter(record, true, "", id);
+                		record.pair.ordinal()))
+                return RMIClientMain.connection.getFilterSignalProvider(id.ordinal()).filter(record, false);
             else
                 return false;
         }

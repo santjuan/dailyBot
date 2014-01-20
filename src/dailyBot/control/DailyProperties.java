@@ -42,4 +42,16 @@ public class DailyProperties
     {
         testing.set(isTesting);
     }
+    
+    private static final AtomicBoolean verbose = new AtomicBoolean(false);
+
+    public static boolean isVerbose()
+    {
+        return verbose.get();
+    }
+
+    public static void setVerbose(boolean isVerbose)
+    {
+        verbose.set(isVerbose);
+    }  
 }

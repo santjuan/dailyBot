@@ -121,6 +121,91 @@ public class ChatConnection
                         sendMessage(answer, true);
                         any = true;
                     }
+                    if(body.contains("verbose"))
+                    {
+                        String bodyThis = body.substring(body.indexOf("verbose"));
+                        String[] split = bodyThis.split(" ");
+                        boolean verbose = false;
+                        try
+                        {
+                            verbose = !split[0].equals("0");
+                        }
+                        catch(Exception e)
+                        {
+                        }
+                        String answer = verbose + "";
+                        DailyProperties.setVerbose(verbose);
+                        sendMessage(answer, true);
+                        any = true;
+                    }
+                    if(body.contains("filtro"))
+                    {
+                        String bodyThis = body.substring(body.indexOf("filtro"));
+                        String[] split = bodyThis.split(" ");
+                        boolean ok = true;
+                        String messageB = "";
+                        if(split.length >= 5)
+                        {
+                           try
+                           {
+                        	   SignalProviderId signalProviderId = null;
+                        	   StrategyId strategy = null;
+                        	   Pair pair = null;
+                        	   String answer = split[4];
+                        	   while(answer.length() > 1 && answer.charAt(0) == '0')
+                        		   answer = answer.substring(1);
+                        	   int newValue = Integer.parseInt(answer, 2);
+                        	   for(SignalProviderId id : SignalProviderId.values())
+                        		   if(id.toString().equals(split[1]))
+                        			   signalProviderId = id;
+                        	   for(StrategyId id : StrategyId.values())
+                        		   if(id.toString().equals(split[2]))
+                        			   strategy = id;
+                        	   for(Pair id : Pair.values())
+                        		   if(id.toString().equals(split[3]) && (id != Pair.ALL))
+                        			   pair = id;
+                        	   SignalProviderId[] providers = new SignalProviderId[0];
+                        	   if(signalProviderId != null)
+                        		   providers = new SignalProviderId[]{ signalProviderId };
+                        	   else if(split[1].equals("ALL"))
+                        		   providers = SignalProviderId.values();
+                        	   StrategyId[] strategies = new StrategyId[0];
+                        	   if(strategy != null)
+                        		   strategies = new StrategyId[]{ strategy };
+                        	   else if(split[2].equals("ALL"))
+                        		   strategies = StrategyId.values();
+                        	   Pair[] pairs = new Pair[0];
+                        	   if(pair != null)
+                        		   pairs = new Pair[]{ pair };
+                        	   else if(split[3].equals("ALL"))
+                        		   pairs = Pair.values();
+                        	   ok = false;
+                        	   messageB += Arrays.toString(providers) + " " + Arrays.toString(strategies) + " " + Arrays.toString(pairs);
+                        	   for(SignalProviderId a : providers)
+                        		   for(StrategyId b : strategies)
+                        			   for(Pair c : pairs)
+                        			   {
+                        				   if(c == Pair.ALL)
+                        					   continue;
+                        				   ok = true;
+                        				   a.signalProvider().changeActiveFilter(b, c, newValue);
+                        			   }
+                           }
+                           catch(Exception e)
+                           {
+                        	   messageB += "error " + e + " " + e.getMessage();
+                        	   ok = false;
+                           }
+                        }
+                        else
+                        {
+                        	ok = false;
+                        	messageB += "numero de argumentos invalido";
+                        }
+                        String answer = ok + " " + messageB;
+                        sendMessage(answer, true);
+                        any = true;
+                    }
                     if(body.contains("consultar"))
                     {
                         String bodyThis = body.substring(body.indexOf("consultar"));
@@ -222,7 +307,7 @@ public class ChatConnection
                         if(((System.currentTimeMillis() - lastSentHelp.get()) >= 60000L) || body.contains("help")
                             || body.contains("ayuda"))
                         {
-                            String answer = "Comandos validos: chequear hilos\nchequear todos\nchequear zulutrade\nchequear IDESTRATEGIA\ncerrar IDESTRATEGIA IDPROVEEDOR PAR\nlistar MINUTOS\nconsultar IDUNICO ACTUAL\nmanual open IDPROVEEDOR PAIR ISBUY\nmanual close IDPROVEEDOR IDTRADE";
+                            String answer = "Comandos validos: chequear hilos\nchequear todos\nchequear zulutrade\nchequear IDESTRATEGIA\ncerrar IDESTRATEGIA IDPROVEEDOR PAR\nlistar MINUTOS\nfiltro PROVEEDOR ESTRATEGIA PAR VALOR\nconsultar IDUNICO ACTUAL\nmanual open IDPROVEEDOR PAIR ISBUY\nmanual close IDPROVEEDOR IDTRADE\nverbose VALOR";
                             sendMessage(answer, true);
                             lastSentHelp.set(System.currentTimeMillis());
                             any = true;

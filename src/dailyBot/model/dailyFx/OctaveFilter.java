@@ -41,7 +41,6 @@ public class OctaveFilter extends ExternalProcessFilter
     public OctaveFilter(SignalProviderId id)
     {
         super(id);
-        startFilter(id);
     }
 
     private static String generateString(SignalHistoryRecord record)

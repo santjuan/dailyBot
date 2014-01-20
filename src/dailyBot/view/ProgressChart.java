@@ -1,9 +1,9 @@
 package dailyBot.view;
 
 import java.awt.BorderLayout;
-import java.rmi.RemoteException;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.ImageIcon;
@@ -17,8 +17,6 @@ import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
 import dailyBot.analysis.SignalHistoryRecord;
-import dailyBot.model.Filter;
-import dailyBot.model.SignalProvider.SignalProviderId;
 
 public class ProgressChart extends JPanel
 {
@@ -26,27 +24,16 @@ public class ProgressChart extends JPanel
 
     private InfoPanel info;
     private JLabel label;
-    private List<SignalHistoryRecord> records;
-    private Filter filter;
-    private SignalProviderId signalProviderId = null;
+    private List<SignalHistoryRecord> records = new ArrayList <SignalHistoryRecord>();
+    private double originalSize;
 
-    public ProgressChart(Filter filter, List<SignalHistoryRecord> records, SignalProviderId signalProviderId)
+    public ProgressChart()
     {
-        this(filter, records);
-        this.signalProviderId = signalProviderId;
-        updateProgressChart();
-    }
-
-    public ProgressChart(Filter filter, List<SignalHistoryRecord> records)
-    {
-        this.filter = filter;
-        this.records = records;
         label = new JLabel();
         info = new InfoPanel();
         setLayout(new BorderLayout());
         add(info, BorderLayout.CENTER);
         add(label, BorderLayout.EAST);
-        updateProgressChart();
     }
 
     public void updateProgressChart()
@@ -54,43 +41,24 @@ public class ProgressChart extends JPanel
         XYSeries series = new XYSeries("Serie ganancia");
         double acum = 0;
         int nTransacciones = 0;
-        int totalTransacciones = 0;
-        long actual = System.currentTimeMillis();
+        int totalTransacciones = (int) originalSize;
         for(SignalHistoryRecord r : records)
         {
-            try
-            {
-                if(signalProviderId != null
-                    && RMIClientMain.connection.getActiveSignalProvider(signalProviderId.ordinal(), r.id.ordinal(),
-                        r.pair.ordinal()) && ((actual - r.openDate) <= (12L * 30L * 24L * 60L * 60L * 1000L)))
-                    totalTransacciones++;
-                else
-                    continue;
-
-            }
-            catch(RemoteException e)
-            {
-            }
-            if(filter.filter(r, false, "", signalProviderId))
-            {
-                nTransacciones++;
-                acum += r.profit;
-                series.add(r.openDate, acum);
-            }
+        	nTransacciones++;
+            acum += r.profit;
+            series.add(r.openDate, acum);
         }
         double media = acum / nTransacciones;
         double desviacionD = 0;
         for(SignalHistoryRecord r : records)
-            if(filter.filter(r, false, "", signalProviderId))
-                desviacionD += (r.profit - media) * (r.profit - media);
+        	desviacionD += (r.profit - media) * (r.profit - media);
         desviacionD /= nTransacciones;
         desviacionD = Math.sqrt(desviacionD);
         info.profit.setText(acum + "");
         NumberFormat df = DecimalFormat.getNumberInstance();
         df.setMaximumFractionDigits(4);
         info.pipsAverage.setText(df.format(media));
-        int porcentaje = (int) (((nTransacciones + 0.0d) / ((signalProviderId == null ? records.size()
-            : totalTransacciones))) * 100);
+        int porcentaje = (int) (((nTransacciones + 0.0d) / (originalSize)) * 100);
         String espacios = nTransacciones < 10 ? "    " : nTransacciones < 100 ? "   " : nTransacciones < 1000 ? "  "
             : " ";
         String espaciosA = espacios;
@@ -103,6 +71,13 @@ public class ProgressChart extends JPanel
         label.setIcon(new ImageIcon(chart.createBufferedImage(600, 350)));
     }
 
+    public void changeRecords(List<SignalHistoryRecord> records, int originalSize)
+    {
+    	this.records = new ArrayList<SignalHistoryRecord> (records);
+    	this.originalSize = originalSize;
+    	updateProgressChart();
+    }
+    
     public List<SignalHistoryRecord> getRecords()
     {
         return records;

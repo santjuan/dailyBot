@@ -2,11 +2,15 @@ package dailyBot.model;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.List;
 import java.util.TreeMap;
 
+import dailyBot.control.connection.ChatConnection;
 import dailyBot.control.connection.EmailConnection;
+import dailyBot.control.connection.zulutrade.ZulutradeConnection;
 import dailyBot.model.Strategy.StrategyId;
+import dailyBot.model.dailyFx.DailyFXStrategySystem;
 
 public class Utils
 {
@@ -96,4 +100,16 @@ public class Utils
             signals.addAll(id.strategy().duplicateSignals());
         return (signals.isEmpty() ? "NO SIGNALS" : sendSignalTable(signals)) + "\n";
     }
+
+	public static void makeHourlyCheck(SignalProvider provider) 
+	{
+		String message = "";
+		message += "DailyBot last read: " + (System.currentTimeMillis() - DailyFXStrategySystem.lastReadTime.get()) + " ms ago\n";
+		message += "DailyBot last change: " + (System.currentTimeMillis() - DailyFXStrategySystem.lastChangeTime.get()) + " ms ago\n";
+		if(Calendar.getInstance().get(Calendar.HOUR_OF_DAY) == 19)
+			message += "Profit: " + provider.getProfit() + "\n";
+		message += "Zulutrade last check: " + (System.currentTimeMillis() - ZulutradeConnection.lastCheckTime.get()) + " ms ago\n";
+		message += "Zulutrade last change: " + (System.currentTimeMillis() - ZulutradeConnection.lastChangeTime.get()) + " ms ago\n";
+		ChatConnection.sendMessage(message, true);
+	}
 }

@@ -29,7 +29,7 @@ public class DailyFXStrategySystem extends StrategySystem
 
     public DailyFXStrategySystem()
     {
-        strategies = new StrategyId[] { StrategyId.BREAKOUT1, StrategyId.BREAKOUT2, StrategyId.RANGE1,
+        strategies = new StrategyId[] { StrategyId.BREAKOUT1, StrategyId.BREAKOUT1, StrategyId.RANGE1,
             StrategyId.RANGE2, StrategyId.MOMENTUM1, StrategyId.MOMENTUM2 };
     }
 
@@ -170,6 +170,7 @@ public class DailyFXStrategySystem extends StrategySystem
 
     public static final AtomicReference <Vector <StrategySignal>> lastRead = new AtomicReference <Vector <StrategySignal>>();
     public static final AtomicLong lastReadTime = new AtomicLong();
+    public static final AtomicLong lastChangeTime = new AtomicLong();
 
     @Override
     protected ArrayList <StrategySignal> read(String[] input)
@@ -219,7 +220,11 @@ public class DailyFXStrategySystem extends StrategySystem
                             affected.getEntryPrice(), affected);
                         changed = true;
                         changedInternal = true;
-                        DailyLog.logInfoWithTitle("rangos", "Cambio: " + affected + " por: " + signal);
+                    	lastChangeTime.set(System.currentTimeMillis());
+                        if(current.getId() != StrategyId.BREAKOUT1 && DailyProperties.isVerbose())
+                        {
+                        	DailyLog.logInfoWithTitle("rangos", "Cambio: " + affected + " por: " + signal);
+                        }
                     }
                     if(affected.getLotNumber() > signal.getLotNumber())
                     {
@@ -237,7 +242,11 @@ public class DailyFXStrategySystem extends StrategySystem
                         }
                         changed = true;
                         changedInternal = true;
-                        DailyLog.logInfoWithTitle("rangos", "Cambio: " + affected + " por: " + signal);
+                        lastChangeTime.set(System.currentTimeMillis());
+                        if(current.getId() != StrategyId.BREAKOUT1 && DailyProperties.isVerbose())
+                        {
+                        	DailyLog.logInfoWithTitle("rangos", "Cambio: " + affected + " por: " + signal);
+                        }
                     }
                     else
                     {
@@ -300,7 +309,11 @@ public class DailyFXStrategySystem extends StrategySystem
                     current.processSignalChange(signal.getPair(), false, signal.isBuy(), signal.getLotNumber(),
                         signal.getEntryPrice(), affected);
                     changed = true;
-                    DailyLog.logInfoWithTitle("rangos", "Agregando: " + signal);
+                	lastChangeTime.set(System.currentTimeMillis());
+                    if(current.getId() != StrategyId.BREAKOUT1 && DailyProperties.isVerbose())
+                    {
+                    	DailyLog.logInfoWithTitle("rangos", "Agregando: " + signal);
+                    }
                 }
                 DailyThreadInfo.registerUpdate("DailyFX updater", "Processing state current signal",
                     "signal processed: " + signal);
@@ -327,7 +340,11 @@ public class DailyFXStrategySystem extends StrategySystem
                         }
                     if(!found)
                     {
-                        DailyLog.logInfoWithTitle("rangos", "No encontrada: " + signal);
+                    	lastChangeTime.set(System.currentTimeMillis());
+                    	if(current.getId() != StrategyId.BREAKOUT1 && DailyProperties.isVerbose())
+                    	{
+                    		DailyLog.logInfoWithTitle("rangos", "No encontrada: " + signal);
+                       	}
                         current.processSignalChange(signal.getPair(), true, signal.isBuy(), signal.getLotNumber(), 0,
                             signal);
                         changed = true;

@@ -37,9 +37,7 @@ public class SignalProvider extends XMLPersistentObject
             @Override
             public Filter[] getFilters(SignalProviderId id)
             {
-                return new Filter[] { "numpy".equals(DailyProperties
-                    .getProperty("dailyBot.model.SignalProvider.DEMO.filter")) ? new NumpyFilter(id)
-                    : new BasicFilter() };
+                return new Filter[] { new BasicFilter() };
             }
         }, new BrokerFactory()
         {
@@ -54,9 +52,7 @@ public class SignalProvider extends XMLPersistentObject
             @Override
             public Filter[] getFilters(SignalProviderId id)
             {
-                return new Filter[] { "octave".equals(DailyProperties
-                    .getProperty("dailyBot.model.SignalProvider.DAILYBOTSSIEURO.filter")) ? new OctaveFilter(id)
-                    : new BasicFilter() };
+                return new Filter[] { new OctaveFilter(id), new NumpyFilter(id), new BasicFilter() };
             }
         }, new BrokerFactory()
         {
@@ -93,11 +89,9 @@ public class SignalProvider extends XMLPersistentObject
                 thisSignalProvider = SignalProvider.loadPersistence(this);
                 if(thisSignalProvider == null)
                     thisSignalProvider = new SignalProvider(this);
-                if(thisSignalProvider.filters == null)
-                    thisSignalProvider.filters = filterFactory.getFilters(this);
-                else
-                    for(Filter filter : thisSignalProvider.filters)
-                        filter.startFilter(this);
+                if(thisSignalProvider.filter == null)
+                    thisSignalProvider.filter = new MultiFilter(this);
+                thisSignalProvider.filter.startFilters(filterFactory.getFilters(this));
                 thisSignalProvider.brokers = brokerFactory.getBrokers(this);
                 thisSignalProvider.startPersistenceThread();
             }
@@ -107,7 +101,7 @@ public class SignalProvider extends XMLPersistentObject
     }
 
     protected volatile SignalProviderId id;
-    protected volatile Filter[] filters;
+    protected volatile MultiFilter filter;
     protected volatile Broker[] brokers;
 
     public SignalProvider()
@@ -216,6 +210,7 @@ public class SignalProvider extends XMLPersistentObject
                                     broker.checkConsistencyFull(false);
                                 DailyThreadInfo.registerUpdate(id.toString() + " check", "State", "brokers checked");
                                 DailyThreadInfo.closeThreadLoop(id.toString() + " check");
+                                Utils.makeHourlyCheck(SignalProvider.this);
                                 checked = true;
                             }
                         }
@@ -243,20 +238,14 @@ public class SignalProvider extends XMLPersistentObject
 
     public boolean isActive(StrategyId strategyId, Pair pair)
     {
-        for(Filter filter : filters)
-            if(!filter.isActive(strategyId, pair))
-                return false;
-        return true;
+    	return filter.hasActive(strategyId, pair);
     }
 
     public boolean filterAllow(SignalHistoryRecord record)
     {
         if(!isActive(record.id, record.pair))
             return false;
-        for(Filter filter : filters)
-            if(!filter.filter(record))
-                return false;
-        return true;
+        return filter.filter(record, true);
     }
 
     public void processSignal(StrategySignal signal, boolean hit)
@@ -286,8 +275,14 @@ public class SignalProvider extends XMLPersistentObject
                     for(Broker broker : brokers)
                         broker.setUniqueId(signal, 0L);
                 else
-                    for(Broker broker : brokers)
-                        broker.openSignal(signal, signal.getStrategyId(), signal.getPair(), signal.isBuy());
+                {
+                	if(Math.abs(signal.getPair().differenceInPips(signal.getEntryPrice(), signal.isBuy())) >= 50)
+                		DailyLog.logError("Senal " + signal + " se abrio demasiado tarde, diferencia absoluta en"
+                				+ " pips: " + Math.abs(signal.getPair().differenceInPips(signal.getEntryPrice(), signal.isBuy())));
+                	else
+	                    for(Broker broker : brokers)
+	                        broker.openSignal(signal, signal.getStrategyId(), signal.getPair(), signal.isBuy());
+                }
                 signal.setUniqueId(id.toString(), 1);
             }
         }
@@ -295,9 +290,8 @@ public class SignalProvider extends XMLPersistentObject
 
     public void openActive(StrategyId strategyId, Pair pair)
     {
-        for(Filter filter : filters)
-            if(!filter.isActive(strategyId, pair))
-                return;
+    	if(!isActive(strategyId, pair))
+    		return;
         StrategySignal toOpen = strategyId.strategy().hasPair(pair);
         if((toOpen.getUniqueId(id.toString()) == 0L) || (toOpen == null) || (toOpen.getUniqueId(id.toString()) == 0L))
             DailyLog.logError("Senal con par: " + pair + ", estrategia: " + strategyId + ", proveedor " + id
@@ -313,7 +307,7 @@ public class SignalProvider extends XMLPersistentObject
 
     public boolean checkConsistency()
     {
-        return filters == null || id == null || brokers == null;
+        return filter == null || id == null || brokers == null;
     }
 
     public boolean getActive(StrategyId strategyId, Pair pair)
@@ -389,14 +383,28 @@ public class SignalProvider extends XMLPersistentObject
             if(signal2 != null && signal.getUniqueId(strategyId.toString()) == 0)
                 signal.setUniqueId(strategyId.toString(), 1L);
         }
-        for(Filter filter : filters)
-            filter.changeActive(strategyId, pair, newActive);
+        filter.changeActive(strategyId, pair, newActive);
     }
 
     public boolean isOpen(StrategyId strategyId, Pair pair)
     {
         StrategySignal signal = strategyId.strategy().hasPair(pair);
         return signal != null && signal.getUniqueId(id.toString()) != 0;
+    }
+    
+    public int getProfit()
+    {
+    	int profit = 0;
+    	for(StrategySignal signal : Utils.getAllSignals())
+    	{
+    		boolean opened = false;
+    		for(Broker b : brokers)
+    			if(b.getUniqueId(signal) != 0)
+    				opened = true;
+    		if(opened)
+    			profit += signal.getPair().differenceInPips(signal.getEntryPrice(), signal.isBuy());
+    	}
+    	return profit;
     }
 
     public void writePersistence()
@@ -425,14 +433,14 @@ public class SignalProvider extends XMLPersistentObject
         }
     }
 
-    public Filter[] getFilters()
+    public MultiFilter getFilter()
     {
-        return filters;
+        return filter;
     }
 
-    public void setFilters(Filter[] filters)
+    public void setFilter(MultiFilter filter)
     {
-        this.filters = filters;
+        this.filter = filter;
     }
 
     public List <StrategySignal> providerSignals()
@@ -456,16 +464,12 @@ public class SignalProvider extends XMLPersistentObject
 
     public boolean filterActive()
     {
-        for(Filter filter : filters)
-            if(!filter.isActive())
-                return false;
-        return true;
+        return filter.isActive();
     }
 
     public void changeFilterActive(boolean newActive)
     {
-        for(Filter filter : filters)
-            filter.setActive(newActive);
+    	filter.setActive(newActive);
     }
 
     public void checkBrokerConsistency()
@@ -479,4 +483,10 @@ public class SignalProvider extends XMLPersistentObject
     {
         return id.ordinal();
     }
+
+	public void changeActiveFilter(StrategyId strategyId, Pair pair,
+			int newValue) 
+	{
+		filter.changeActiveFilter(strategyId, pair, newValue);
+	}
 }

@@ -1,10 +1,7 @@
 package dailyBot.analysis;
 
 import java.io.Serializable;
-
 import java.util.EnumMap;
-
-import dailyBot.control.DailyLog;
 
 public class Ranges implements Serializable
 {
@@ -204,20 +201,12 @@ public class Ranges implements Serializable
         toChange.setInvertedSell(range.isInvertedSell());
     }
 
-    public boolean fulfills(SignalHistoryRecord record, boolean ignoreInfo, String sendMessage)
+    public boolean fulfills(SignalHistoryRecord record)
     {
-        String message = sendMessage + "\n\n" + record.toString() + "\n\n";
         for(Indicator indicator : Indicator.values())
         {
-            message += indicator.toString();
             if(!ranges.containsKey(indicator))
                 ranges.put(indicator, indicator.range.duplicate());
-            if(ignoreInfo && indicator.isInfo)
-            {
-                message += ", ignorando: " + ranges.get(indicator).toString(indicator.calculate(record), record.buy)
-                    + "\n";
-                continue;
-            }
             if(indicator == Indicator.BUY)
             {
                 int value = (int) ranges.get(Indicator.BUY).getMinBuy();
@@ -227,19 +216,8 @@ public class Ranges implements Serializable
                     return false;
             }
             else if(!ranges.get(indicator).isInside(indicator.calculate(record), record.buy))
-            {
-                message += ", no cumple: " + ranges.get(indicator).toString(indicator.calculate(record), record.buy)
-                    + ", terminando con false\n";
-                if(!sendMessage.equals(""))
-                    DailyLog.logInfoWithTitle("rangos", message);
                 return false;
-            }
-            else
-                message += ", cumple: " + ranges.get(indicator).toString(indicator.calculate(record), record.buy)
-                    + "\n";
         }
-        if(!sendMessage.equals(""))
-            DailyLog.logInfoWithTitle("rangos", message);
         return true;
     }
 

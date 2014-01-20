@@ -76,7 +76,7 @@ public class IndicatorChart extends JPanel
             }
             else
             {
-                if(ranges.fulfills(r, false, ""))
+                if(ranges.fulfills(r))
                 {
                     nTransacciones++;
                     acum += r.profit;
@@ -96,7 +96,7 @@ public class IndicatorChart extends JPanel
             }
             else
             {
-                if(ranges.fulfills(r, false, ""))
+                if(ranges.fulfills(r))
                     desviacionD += (r.profit - media) * (r.profit - media);
             }
         desviacionD /= nTransacciones;

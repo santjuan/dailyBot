@@ -7,10 +7,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.rmi.RemoteException;
 import java.util.LinkedList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.swing.AbstractButton;
 import javax.swing.JCheckBox;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
@@ -18,8 +21,8 @@ import javax.swing.event.ChangeListener;
 
 import dailyBot.control.DailyLog;
 import dailyBot.model.Pair;
-import dailyBot.model.Strategy.StrategyId;
 import dailyBot.model.SignalProvider.SignalProviderId;
+import dailyBot.model.Strategy.StrategyId;
 
 public class PairFormat extends JPanel
 {
@@ -30,6 +33,31 @@ public class PairFormat extends JPanel
     private HistoricChart graficaHistorial;
     private JCheckBox botonActivo;
 
+    private final Runnable update = new Runnable()
+    {
+		@Override
+		public void run() 
+		{
+			SwingUtilities.invokeLater(new Runnable()
+            {
+                public void run()
+                {
+                	graficaProgreso.changeRecords(SignalProviderFormat.getCurrentRecords(signalProviderId), SignalProviderFormat.getCurrentRecordsSize(signalProviderId));
+                }
+            });
+            SwingUtilities.invokeLater(new Runnable()
+            {
+                public void run()
+                {
+                	graficaHistorial.changeRecords(SignalProviderFormat.getCurrentRecords(signalProviderId));
+                }
+            });
+		}
+    };
+    
+    private final static ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
+    private final static AtomicLong count = new AtomicLong();
+    
     public PairFormat(SignalProviderId i, StrategyId ii, ProgressChart gP, HistoricChart gH, JCheckBox bA)
     {
         super();
@@ -39,6 +67,22 @@ public class PairFormat extends JPanel
         graficaHistorial = gH;
         botonActivo = bA;
         initialize();
+        SwingUtilities.invokeLater(new Runnable()
+        {
+            public void run()
+            {
+            	graficaProgreso.changeRecords(SignalProviderFormat.getCurrentRecords(signalProviderId), SignalProviderFormat.getCurrentRecordsSize(signalProviderId));
+            }
+        });
+        SwingUtilities.invokeLater(new Runnable()
+        {
+            public void run()
+            {
+            	graficaHistorial.changeRecords(SignalProviderFormat.getCurrentRecords(signalProviderId));
+            }
+        });
+        if(count.incrementAndGet() == 1)
+        	service.scheduleWithFixedDelay(update, 10000, 1000, TimeUnit.MILLISECONDS);
     }
 
     private void initialize()
@@ -152,10 +196,10 @@ public class PairFormat extends JPanel
                         && RMIClientMain.connection.getOpenSignalProvider(signalProviderId.ordinal(),
                             strategyId.ordinal(), par.ordinal()))
                     {
-                        int a = JOptionPane.showConfirmDialog(null,
-                            "La senal estaba abierta, desea abrirla nuevamente?", "Confirmacion",
-                            JOptionPane.YES_NO_OPTION);
-                        boolean abrir = a == JOptionPane.YES_OPTION;
+                        //int a = JOptionPane.showConfirmDialog(null,
+                         //   "La senal estaba abierta, desea abrirla nuevamente?", "Confirmacion",
+                         //   JOptionPane.YES_NO_OPTION);
+                        boolean abrir = false;//a == JOptionPane.YES_OPTION;
                         RMIClientMain.connection.setActiveSignalProvider(signalProviderId.ordinal(),
                             strategyId.ordinal(), par.ordinal(), activar, abrir);
                     }
@@ -169,14 +213,14 @@ public class PairFormat extends JPanel
                 {
                     public void run()
                     {
-                        graficaProgreso.updateProgressChart();
+                    	graficaProgreso.changeRecords(SignalProviderFormat.getCurrentRecords(signalProviderId), SignalProviderFormat.getCurrentRecordsSize(signalProviderId));
                     }
                 });
                 SwingUtilities.invokeLater(new Runnable()
                 {
                     public void run()
                     {
-                        graficaHistorial.updateCharts();
+                    	graficaHistorial.changeRecords(SignalProviderFormat.getCurrentRecords(signalProviderId));
                     }
                 });
             }

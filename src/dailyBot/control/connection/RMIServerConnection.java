@@ -3,11 +3,11 @@ package dailyBot.control.connection;
 import java.rmi.RemoteException;
 import java.util.List;
 
-import dailyBot.model.Filter;
+import dailyBot.model.MultiFilter;
 import dailyBot.model.Pair;
-import dailyBot.model.StrategySignal;
-import dailyBot.model.Strategy.StrategyId;
 import dailyBot.model.SignalProvider.SignalProviderId;
+import dailyBot.model.Strategy.StrategyId;
+import dailyBot.model.StrategySignal;
 
 public class RMIServerConnection extends BasicConnection implements RMIConnection
 {
@@ -17,7 +17,7 @@ public class RMIServerConnection extends BasicConnection implements RMIConnectio
 
         static Boolean[][][] dpActive = new Boolean[SignalProviderId.values().length][StrategyId.values().length][Pair
             .values().length];
-        static Filter[] dpFilters = new Filter[SignalProviderId.values().length];
+        static MultiFilter[] dpFilters = new MultiFilter[SignalProviderId.values().length];
 
         public Local(RMIConnection server)
         {
@@ -36,12 +36,14 @@ public class RMIServerConnection extends BasicConnection implements RMIConnectio
         public synchronized void setActiveSignalProvider(int signalProviderId, int strategyId, int pairId,
             boolean active, boolean open) throws RemoteException
         {
+        	 if(dpFilters[signalProviderId] != null)
+                 dpFilters[signalProviderId].changeActive(StrategyId.values()[strategyId], Pair.values()[pairId], active);
             server.setActiveSignalProvider(signalProviderId, strategyId, pairId, active, open);
             dpActive[signalProviderId][strategyId][pairId] = active;
         }
 
         @Override
-        public boolean getOpenSignalProvider(int signalProviderId, int strategyId, int pairId) throws RemoteException
+        public synchronized boolean getOpenSignalProvider(int signalProviderId, int strategyId, int pairId) throws RemoteException
         {
             return server.getOpenSignalProvider(signalProviderId, strategyId, pairId);
         }
@@ -57,7 +59,7 @@ public class RMIServerConnection extends BasicConnection implements RMIConnectio
         }
 
         @Override
-        public synchronized Filter getFilterSignalProvider(int signalProviderId) throws RemoteException
+        public synchronized MultiFilter getFilterSignalProvider(int signalProviderId) throws RemoteException
         {
             if(dpFilters[signalProviderId] != null)
                 return dpFilters[signalProviderId];
@@ -89,13 +91,13 @@ public class RMIServerConnection extends BasicConnection implements RMIConnectio
         }
 
         @Override
-        public boolean getActive(int signalProviderId) throws RemoteException
+        public synchronized boolean getActive(int signalProviderId) throws RemoteException
         {
             return server.getActive(signalProviderId);
         }
 
         @Override
-        public void setActive(int signalProviderId, boolean active) throws RemoteException
+        public synchronized void setActive(int signalProviderId, boolean active) throws RemoteException
         {
             if(dpFilters[signalProviderId] != null && (dpFilters[signalProviderId].isActive() == active))
                 return;
@@ -104,6 +106,15 @@ public class RMIServerConnection extends BasicConnection implements RMIConnectio
             dpActive = new Boolean[SignalProviderId.values().length][StrategyId.values().length][Pair.values().length];
             server.setActive(signalProviderId, active);
         }
+
+		@Override
+		public synchronized void setActiveFilter(int signalProviderId, int strategyId,
+				int pairId, int newValue) throws RemoteException 
+		{
+			if(dpFilters[signalProviderId] != null)
+                dpFilters[signalProviderId].changeActiveFilter(StrategyId.values()[strategyId], Pair.values()[pairId], newValue);
+			server.setActiveFilter(signalProviderId, strategyId, pairId, newValue);
+		}
     }
 
     @Override
@@ -132,9 +143,9 @@ public class RMIServerConnection extends BasicConnection implements RMIConnectio
     }
 
     @Override
-    public Filter getFilterSignalProvider(int signalProviderId) throws RemoteException
+    public MultiFilter getFilterSignalProvider(int signalProviderId) throws RemoteException
     {
-        return SignalProviderId.values()[signalProviderId].signalProvider().getFilters()[0];
+        return SignalProviderId.values()[signalProviderId].signalProvider().getFilter();
     }
 
     @Override
@@ -172,4 +183,11 @@ public class RMIServerConnection extends BasicConnection implements RMIConnectio
     {
         SignalProviderId.values()[signalProviderId].signalProvider().changeFilterActive(active);
     }
+
+	@Override
+	public void setActiveFilter(int signalProviderId, int strategyId,
+			int pairId, int newValue) throws RemoteException
+	{
+		SignalProviderId.values()[signalProviderId].signalProvider().changeActiveFilter(StrategyId.values()[strategyId], Pair.values()[pairId], newValue);
+	}
 }

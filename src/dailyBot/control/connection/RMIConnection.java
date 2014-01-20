@@ -4,7 +4,7 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.List;
 
-import dailyBot.model.Filter;
+import dailyBot.model.MultiFilter;
 import dailyBot.model.StrategySignal;
 
 public interface RMIConnection extends Remote
@@ -20,7 +20,10 @@ public interface RMIConnection extends Remote
     public void setActiveSignalProvider(int signalProviderId, int strategyId, int pairId, boolean active, boolean open)
         throws RemoteException;
 
-    public Filter getFilterSignalProvider(int signalProviderId) throws RemoteException;
+    public void setActiveFilter(int signalProviderId, int strategyId, int pairId, int newValue)
+            throws RemoteException;
+    
+    public MultiFilter getFilterSignalProvider(int signalProviderId) throws RemoteException;
 
     public StrategySignal getStrategySignals(int strategyId, int pairId) throws RemoteException;
 

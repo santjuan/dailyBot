@@ -78,22 +78,35 @@ public class InactiveSignalProvider extends SignalProvider
     }
 
     @Override
+    public int getProfit()
+    {
+    	return 0;
+    }
+    
+    @Override
     public void writePersistence()
     {
     }
 
     @Override
-    public Filter[] getFilters()
+    public MultiFilter getFilter()
     {
-        return new Filter[] { new BasicFilter()
+    	MultiFilter filter = new MultiFilter(id);
+    	filter.startFilters(new Filter[] { new BasicFilter()
         {
             private static final long serialVersionUID = 1L;
 
-            public boolean filter(SignalHistoryRecord record, Object... parameters)
+            public boolean filter(SignalHistoryRecord record)
             {
                 return false;
             }
-        } };
+        } });
+    	return filter;
+    }
+    
+    @Override
+    public void setFilter(MultiFilter filter)
+    {
     }
 
     @Override
@@ -115,6 +128,12 @@ public class InactiveSignalProvider extends SignalProvider
 
     @Override
     public void checkBrokerConsistency()
+    {
+    }
+    
+    @Override
+	public void changeActiveFilter(StrategyId strategyId, Pair pair,
+			int newValue) 
     {
     }
 }

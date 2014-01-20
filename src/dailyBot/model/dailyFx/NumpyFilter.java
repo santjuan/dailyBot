@@ -41,7 +41,6 @@ public class NumpyFilter extends ExternalProcessFilter
     public NumpyFilter(SignalProviderId id)
     {
         super(id);
-        startFilter(id);
     }
 
     private static String generateString(SignalHistoryRecord record)

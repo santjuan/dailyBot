@@ -1,17 +1,14 @@
 package dailyBot.model;
 
-import java.rmi.RemoteException;
 import java.util.List;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import dailyBot.analysis.SignalHistoryRecord;
 import dailyBot.analysis.Utils;
-import dailyBot.control.DailyLog;
 import dailyBot.control.DailyThreadInfo;
 import dailyBot.model.SignalProvider.SignalProviderId;
 import dailyBot.model.Strategy.StrategyId;
-import dailyBot.view.RMIClientMain;
 
 public abstract class ExternalProcessFilter extends Filter
 {
@@ -43,41 +40,11 @@ public abstract class ExternalProcessFilter extends Filter
     }
 
     @Override
-    public boolean filter(SignalHistoryRecord record, Object... parameters)
+    public boolean filter(SignalHistoryRecord record)
     {
-        try
-        {
-            if(RMIClientMain.connection != null
-                && !RMIClientMain.connection.getActiveSignalProvider(id.ordinal(), record.id.ordinal(),
-                    record.pair.ordinal()))
-                return false;
-            if(RMIClientMain.connection == null && !isActive(record.id, record.pair))
-                return false;
-        }
-        catch(RemoteException e)
-        {
-            DailyLog.logRMI("Error preguntando si el proveedor esta activo " + e.getMessage());
-        }
-        String message = "Intentando abrir " + id.toString() + ", " + record.id.toString() + ", "
-            + record.pair.toString() + ", " + record.pair.getCurrentPrice(record.buy) + ", "
-            + (record.buy ? "BUY" : "SELL");
         if(containKey(map, record))
-        {
-            if(!message.equals(""))
-            {
-                message += "\n" + "in map: " + getFilterAnswer(map, record);
-                if(RMIClientMain.connection == null)
-                    DailyLog.logInfoWithTitle("rangos", message);
-            }
-            return getFilterAnswer(map, record);
-        }
+        	return getFilterAnswer(map, record);
         String result = process(record);
-        if(!message.equals(""))
-        {
-            message += "\n" + result;
-            if(RMIClientMain.connection == null)
-                DailyLog.logInfoWithTitle("rangos", message);
-        }
         return result.compareToIgnoreCase("YES") == 0;
     }
 

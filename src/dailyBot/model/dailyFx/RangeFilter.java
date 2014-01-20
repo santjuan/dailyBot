@@ -27,10 +27,10 @@ public class RangeFilter extends Filter
     }
 
     @Override
-    public boolean filter(SignalHistoryRecord signalHistoryRecord, Object... parameters)
+    public boolean filter(SignalHistoryRecord signalHistoryRecord)
     {
         return ranges[signalHistoryRecord.id.ordinal()][signalHistoryRecord.pair.ordinal()].fulfills(
-            signalHistoryRecord, (Boolean) parameters[0], (String) parameters[1]);
+            signalHistoryRecord);
     }
 
     public Ranges getRanges(Pair pair, StrategyId strategyId)

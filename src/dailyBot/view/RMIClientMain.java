@@ -2,10 +2,12 @@ package dailyBot.view;
 
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.WindowConstants;
@@ -15,6 +17,7 @@ import dailyBot.control.DailyLog;
 import dailyBot.control.DailyProperties;
 import dailyBot.control.connection.RMIConnection;
 import dailyBot.control.connection.RMIServerConnection;
+import dailyBot.model.Pair;
 import dailyBot.model.SignalProvider.SignalProviderId;
 import dailyBot.model.Strategy.StrategyId;
 
@@ -30,6 +33,15 @@ public class RMIClientMain extends JFrame
         initialize();
     }
 
+    private static Object[] addAllOption(Object[] values)
+    {
+    	Object[] answer = new Object[values.length + 1];
+    	answer[answer.length - 1] = "ALL";
+    	for(int i = 0; i < values.length; i++)
+    		answer[i] = values[i];
+    	return answer;
+    }
+    
     private void initialize()
     {
         GridLayout gridLayout = new GridLayout();
@@ -37,8 +49,91 @@ public class RMIClientMain extends JFrame
         gridLayout.setColumns(2);
         setLayout(gridLayout);
         setSize(259, 290);
-        for(StrategyId id : StrategyId.values())
-            this.add(getStrategyButton(id));
+        JButton activo = new JButton("Cambiar activo");
+        activo.addActionListener(new java.awt.event.ActionListener()
+        {
+            public void actionPerformed(java.awt.event.ActionEvent e)
+            {
+                Object o = JOptionPane.showInputDialog(RMIClientMain.this, "Seleccione el proveedor", "Proveedor", JOptionPane.PLAIN_MESSAGE, null, addAllOption(SignalProviderId.values()), addAllOption(SignalProviderId.values())[0]);
+                if((o != null))
+                {
+                	SignalProviderId[] proveedores = new SignalProviderId[0];
+                	if(o instanceof SignalProviderId)
+                		proveedores = new SignalProviderId[]{ (SignalProviderId) o };
+                	else
+                		proveedores = SignalProviderId.values();
+                	o = JOptionPane.showInputDialog(RMIClientMain.this, "Seleccione la estrategia", "Estrategia", JOptionPane.PLAIN_MESSAGE, null, addAllOption(StrategyId.values()), addAllOption(StrategyId.values())[0]);	
+                	if(o != null)
+                	{
+                		StrategyId[] estrategias = new StrategyId[0];
+                		if(o instanceof StrategyId)
+                			estrategias = new StrategyId[]{ (StrategyId) o };
+                		else
+                			estrategias = StrategyId.values();
+                		while(true)
+                		{
+                			o = JOptionPane.showInputDialog(RMIClientMain.this, "Seleccione el par", "Par", JOptionPane.PLAIN_MESSAGE, null, addAllOption(Pair.values()), addAllOption(Pair.values())[0]);	
+                    		if(o == null)
+                    			return;
+                			Pair[] pares = new Pair[0];
+                			if(o instanceof Pair)
+                				pares = new Pair[]{ (Pair) o };
+                			else
+                				pares = Pair.values();
+            				try
+            				{
+								connection.setActiveSignalProvider(proveedores[0].ordinal(), estrategias[0].ordinal(), pares[0].ordinal(), true, false);
+							} 
+            				catch (RemoteException e2)
+            				{
+							}
+                			while(true)
+                			{
+                				JOptionPane optionPane = new JOptionPane("Ingrese el nuevo valor", JOptionPane.QUESTION_MESSAGE, JOptionPane.OK_CANCEL_OPTION, null, new String[]{"111", "110", "100", "010"}, "111");
+                				JDialog dialog = optionPane.createDialog("Valor");
+                				dialog.setVisible(true);
+                				dialog.dispose();
+                				String answer = (String) optionPane.getValue();
+                				if(answer == null)
+                				{
+                					try 
+                					{
+										connection.setActiveSignalProvider(proveedores[0].ordinal(), estrategias[0].ordinal(), pares[0].ordinal(), false, false);
+									}
+                					catch (RemoteException e1)
+                					{
+									}
+	                				break;
+                				}
+	                			try
+	                			{
+	                				while(answer.length() > 1 && answer.charAt(0) == '0')
+	                					answer = answer.substring(1);
+	                				int value = Integer.parseInt(answer, 2);
+	                				for(SignalProviderId proveedor : proveedores)
+	                					for(StrategyId estrategia : estrategias)
+	                						for(Pair par : pares)
+	                							if(par != Pair.ALL)
+	                								connection.setActiveFilter(proveedor.ordinal(), estrategia.ordinal(), par.ordinal(), value);
+	                			}
+	                			catch(Exception e1)
+	                			{
+	                				try 
+                					{
+										connection.setActiveSignalProvider(proveedores[0].ordinal(), estrategias[0].ordinal(), pares[0].ordinal(), false, false);
+									}
+                					catch (RemoteException e2)
+                					{
+									}
+	                				break;
+	                			}
+                			}
+                		}
+                	}   
+                }
+            }
+        });
+        add(activo);
         for(SignalProviderId id : SignalProviderId.values())
             this.add(getSignalProviderButton(id));
         JButton salir = new JButton();
@@ -47,7 +142,7 @@ public class RMIClientMain extends JFrame
         {
             public void actionPerformed(java.awt.event.ActionEvent e)
             {
-                DailyBotMain.exit();
+            	System.exit(0);
             }
         });
         add(salir);
@@ -55,21 +150,6 @@ public class RMIClientMain extends JFrame
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         pack();
         setVisible(true);
-    }
-
-    private JButton getStrategyButton(final StrategyId strategyId)
-    {
-        JButton botonNuevo = new JButton();
-        botonNuevo.setText(strategyId.toString());
-        botonNuevo.addActionListener(new java.awt.event.ActionListener()
-        {
-            public void actionPerformed(java.awt.event.ActionEvent e)
-            {
-                new DailyTable(strategyId);
-                new GraphicStrategy(strategyId, true);
-            }
-        });
-        return botonNuevo;
     }
 
     private JButton getSignalProviderButton(final SignalProviderId signalProviderId)
