@@ -21,7 +21,7 @@ public class InactiveSignalProvider extends SignalProvider
     }
 
     @Override
-    public boolean filterAllow(SignalHistoryRecord record)
+    public boolean filterAllow(SignalHistoryRecord record, double price)
     {
         return false;
     }
@@ -82,33 +82,13 @@ public class InactiveSignalProvider extends SignalProvider
     {
     	return 0;
     }
-    
-    @Override
-    public void writePersistence()
-    {
-    }
 
     @Override
-    public MultiFilter getFilter()
+    public MultiFilter getFilter() 
     {
-    	MultiFilter filter = new MultiFilter(id);
-    	filter.startFilters(new Filter[] { new BasicFilter()
-        {
-            private static final long serialVersionUID = 1L;
-
-            public boolean filter(SignalHistoryRecord record)
-            {
-                return false;
-            }
-        } });
-    	return filter;
+    	return null;
     }
     
-    @Override
-    public void setFilter(MultiFilter filter)
-    {
-    }
-
     @Override
     public List <StrategySignal> providerSignals()
     {
@@ -134,6 +114,11 @@ public class InactiveSignalProvider extends SignalProvider
     @Override
 	public void changeActiveFilter(StrategyId strategyId, Pair pair,
 			int newValue) 
+    {
+    }
+
+    @Override
+	public void startPersistenceThread()
     {
     }
 }

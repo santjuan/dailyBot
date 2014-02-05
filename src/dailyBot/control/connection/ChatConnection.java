@@ -15,9 +15,9 @@ import org.jivesoftware.smack.packet.Message;
 
 import dailyBot.control.DailyLog;
 import dailyBot.control.DailyProperties;
-import dailyBot.control.DailyThread;
-import dailyBot.control.DailyThreadAdmin;
-import dailyBot.control.DailyThreadInfo;
+import dailyBot.control.DailyExecutor;
+import dailyBot.control.DailyLoopInfo;
+import dailyBot.control.DailyUtils;
 import dailyBot.model.Pair;
 import dailyBot.model.SignalProvider.SignalProviderId;
 import dailyBot.model.Strategy.StrategyId;
@@ -42,7 +42,7 @@ public class ChatConnection
                 {
                     if(body.contains("chequear h"))
                     {
-                        String answer = DailyThreadAdmin.checkThreads();
+                        String answer = DailyExecutor.checkRunnables();
                         sendMessage(answer, true);
                         any = true;
                     }
@@ -117,7 +117,7 @@ public class ChatConnection
                         catch(Exception e)
                         {
                         }
-                        String answer = DailyThreadInfo.listThreads(minutes);
+                        String answer = DailyLoopInfo.listLoops(minutes);
                         sendMessage(answer, true);
                         any = true;
                     }
@@ -128,7 +128,7 @@ public class ChatConnection
                         boolean verbose = false;
                         try
                         {
-                            verbose = !split[0].equals("0");
+                            verbose = !split[1].equals("0");
                         }
                         catch(Exception e)
                         {
@@ -220,7 +220,7 @@ public class ChatConnection
                         catch(Exception e)
                         {
                         }
-                        String answer = DailyThreadInfo.getLastUpdateInfo(id, current);
+                        String answer = DailyLoopInfo.getLastUpdateInfo(id, current);
                         sendMessage(answer, true);
                         any = true;
                     }
@@ -308,7 +308,7 @@ public class ChatConnection
                             || body.contains("ayuda"))
                         {
                             String answer = "Comandos validos: chequear hilos\nchequear todos\nchequear zulutrade\nchequear IDESTRATEGIA\ncerrar IDESTRATEGIA IDPROVEEDOR PAR\nlistar MINUTOS\nfiltro PROVEEDOR ESTRATEGIA PAR VALOR\nconsultar IDUNICO ACTUAL\nmanual open IDPROVEEDOR PAIR ISBUY\nmanual close IDPROVEEDOR IDTRADE\nverbose VALOR";
-                            sendMessage(answer, true);
+                            sendMessage("Recibido: " + body + "\n" + answer, true);
                             lastSentHelp.set(System.currentTimeMillis());
                             any = true;
                         }
@@ -349,7 +349,7 @@ public class ChatConnection
                     try
                     {
                         xMPPConnection.get().disconnect();
-                        DailyThread.sleep(30000);
+                        DailyUtils.sleep(30000);
                         xMPPConnection.set(null);
                     }
                     catch(Exception e)

@@ -12,7 +12,6 @@
 	<classpathentry kind="lib" path="libs/jfreechart-1.0.12.jar"/>
 	<classpathentry kind="lib" path="libs/mail.jar"/>
 	<classpathentry kind="lib" path="libs/mailapi.jar"/>
-	<classpathentry kind="lib" path="libs/mysql-connector-java-5.1.12-bin.jar"/>
 	<classpathentry kind="lib" path="libs/pop3.jar"/>
 	<classpathentry kind="lib" path="libs/smtp.jar"/>
 	<classpathentry kind="lib" path="libs/gson-1.5.jar"/>
@@ -24,5 +23,6 @@
 	<classpathentry kind="lib" path="libs/zulutradeApi.jar"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="lib" path="libs/encog-core-3.1.0.jar"/>
+	<classpathentry kind="lib" path="libs/sqlite-jdbc-3.7.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -5,7 +5,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.SortedMap;
 
-import dailyBot.control.connection.MySqlConnection;
+import dailyBot.control.connection.SqlConnection;
 import dailyBot.model.Pair;
 
 public class StatisticsUtils
@@ -43,7 +43,7 @@ public class StatisticsUtils
     public static double calculateATR(Pair pair, int period, long closingDate)
     {
         ArrayList <Double> values = new ArrayList <Double>();
-        SortedMap <Date, PairHistory> map = MySqlConnection.getPairHistory(pair, new Date(closingDate));
+        SortedMap <Date, PairHistory> map = SqlConnection.getPairHistory(pair, new Date(closingDate));
         double lastClose = 0;
         int i = 0;
         for(PairHistory actual : map.values())
@@ -70,7 +70,7 @@ public class StatisticsUtils
     public static double calculateRSI(Pair pair, int period, long closingDate)
     {
         ArrayList <Double> values = new ArrayList <Double>();
-        SortedMap <Date, PairHistory> map = MySqlConnection.getPairHistory(pair, new Date(closingDate));
+        SortedMap <Date, PairHistory> map = SqlConnection.getPairHistory(pair, new Date(closingDate));
         double lastClose = 0;
         int i = 0;
         for(PairHistory actual : map.values())

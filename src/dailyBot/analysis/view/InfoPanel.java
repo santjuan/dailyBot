@@ -1,4 +1,4 @@
-package dailyBot.view;
+package dailyBot.analysis.view;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;

@@ -41,7 +41,7 @@ public abstract class StrategySystem
         }
     }
 
-    public abstract void startThread();
+    public abstract void startThreads();
 
     public abstract void writePersistence();
 }

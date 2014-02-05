@@ -1,40 +1,41 @@
 package dailyBot.control.connection;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.SortedMap;
 import java.util.TimeZone;
 import java.util.TreeMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import com.mysql.jdbc.Driver;
+import java.util.concurrent.atomic.AtomicReference;
 
 import dailyBot.analysis.SignalHistoryRecord;
 import dailyBot.analysis.StatisticsUtils.PairHistory;
 import dailyBot.control.DailyLog;
 import dailyBot.control.DailyProperties;
-import dailyBot.control.DailyThread;
+import dailyBot.control.DailyUtils;
 import dailyBot.model.Pair;
 import dailyBot.model.Strategy.StrategyId;
 import dailyBot.model.StrategySignal;
 
-public class MySqlConnection
+public class SqlConnection
 {
-    private static AtomicInteger connectionCount = new AtomicInteger();
-    private static LinkedBlockingQueue <Connection> connectionPool = startPool();
-
     private static void close(ResultSet resultSet)
     {
         try
@@ -84,19 +85,19 @@ public class MySqlConnection
     }
 
     private static final String createTableSignalHistoryRecord = "CREATE TABLE IF NOT EXISTS SignalHistoryRecord ("
-        + "Id int(11) NOT NULL AUTO_INCREMENT, " + "StrategyId tinyint(4) NOT NULL, " + "CloseDate datetime NOT NULL, "
+        + "Id int(11), " + "StrategyId tinyint(4) NOT NULL, " + "CloseDate datetime NOT NULL, "
         + "Pair tinyint(4) NOT NULL, " + "Profit smallint(6) NOT NULL, " + "VIX double NOT NULL, "
         + "SSI1 double NOT NULL, " + "SSI2 double NOT NULL, " + "IsBuy tinyint(1) NOT NULL DEFAULT '1', "
         + "OpenDate datetime NOT NULL, " + "High smallint(6) NOT NULL DEFAULT '-32768', "
         + "Low smallint(6) NOT NULL DEFAULT '32767', " + "PRIMARY KEY (Id)" + ")";
 
     private static final AtomicBoolean signalHistoryRecordCreated = new AtomicBoolean();
-
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
     public static void addRecord(StrategyId strategyId, StrategySignal signal)
     {
         if(!signalHistoryRecordCreated.get())
         {
-            synchronized(MySqlConnection.class)
+            synchronized(SqlConnection.class)
             {
                 if(!signalHistoryRecordCreated.get())
                 {
@@ -123,10 +124,24 @@ public class MySqlConnection
             try
             {
                 statement = connection.createStatement();
+                int id = 0;
+                ResultSet rs = null;
+                try
+                {
+                	rs = statement.executeQuery("SELECT Id FROM SignalHistoryRecord ORDER BY id DESC LIMIT 1");
+                	if(rs.next())
+                		id = rs.getInt(1);
+                }
+                catch(Exception e)
+                {
+                	close(rs);
+                }
+                id++;
                 statement.setQueryTimeout(60);
                 statement
-                    .executeUpdate("INSERT SignalHistoryRecord (StrategyId,CloseDate,Pair,Profit,VIX,SSI1,SSI2,IsBuy,OpenDate,High,Low) VALUES("
-                        + strategyId.ordinal()
+                    .executeUpdate("INSERT INTO SignalHistoryRecord (Id,StrategyId,CloseDate,Pair,Profit,VIX,SSI1,SSI2,IsBuy,OpenDate,High,Low) VALUES("
+                        + id + ","
+                    	+ strategyId.ordinal()
                         + ","
                         + formatDate(dateLong)
                         + ","
@@ -170,7 +185,7 @@ public class MySqlConnection
 
     private static final String createTableATR = "CREATE TABLE IF NOT EXISTS ATR (" + "Pair tinyint(4) NOT NULL, "
         + "Date date NOT NULL, " + "Open double NOT NULL, " + "Close double NOT NULL, " + "Low double NOT NULL, "
-        + "High double NOT NULL, " + "PRIMARY KEY (Pair, Date) USING BTREE" + ")";
+        + "High double NOT NULL, " + "PRIMARY KEY (Pair, Date))";
 
     private static final AtomicBoolean ATRCreated = new AtomicBoolean();
 
@@ -178,7 +193,7 @@ public class MySqlConnection
     {
         if(!ATRCreated.get())
         {
-            synchronized(MySqlConnection.class)
+            synchronized(SqlConnection.class)
             {
                 if(!ATRCreated.get())
                 {
@@ -194,7 +209,7 @@ public class MySqlConnection
             statement = connection.createStatement();
             statement.setQueryTimeout(60);
             statement.executeUpdate("delete from ATR where Pair=" + pair.ordinal() + " and Date='" + date + "'");
-            statement.executeUpdate("INSERT ATR (Pair,Date,Open,Close,Low,High) VALUES(" + pair.ordinal() + ",'" + date
+            statement.executeUpdate("INSERT INTO ATR (Pair,Date,Open,Close,Low,High) VALUES(" + pair.ordinal() + ",'" + date
                 + "'," + open + "," + close + "," + low + "," + high + ")");
         }
         catch(SQLException s)
@@ -229,7 +244,7 @@ public class MySqlConnection
     {
         if(!ATRCreated.get())
         {
-            synchronized(MySqlConnection.class)
+            synchronized(SqlConnection.class)
             {
                 if(!ATRCreated.get())
                 {
@@ -282,6 +297,7 @@ public class MySqlConnection
 
         static synchronized EnumMap <Pair, TreeMap <Date, PairHistory>> getCache()
         {
+        	DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
             EnumMap <Pair, TreeMap <Date, PairHistory>> cache = new EnumMap <Pair, TreeMap <Date, PairHistory>>(
                 Pair.class);
             for(Pair pair : Pair.values())
@@ -296,7 +312,7 @@ public class MySqlConnection
                 resultSet = statement.executeQuery("select * from ATR");
                 while(resultSet.next())
                 {
-                    Date date = resultSet.getDate("Date");
+                    Date date = df.parse(resultSet.getString("Date"));
                     Calendar temp = Calendar.getInstance();
                     temp.setTime(date);
                     temp.set(Calendar.HOUR_OF_DAY, 19);
@@ -306,7 +322,7 @@ public class MySqlConnection
                             .getDouble("High"), resultSet.getDouble("Open"), resultSet.getDouble("Close")));
                 }
             }
-            catch(SQLException s)
+            catch(Exception s)
             {
                 DailyLog.logError(s.getMessage() + ": error cargando la cache en CacheHistoriaPares");
                 try
@@ -402,7 +418,7 @@ public class MySqlConnection
                 catch(SQLException e)
                 {
                     DailyLog.logError("Error ejecutando query " + selectSql);
-                    DailyThread.sleep(6000L);
+                    DailyUtils.sleep(6000L);
                     try
                     {
                         connection.close();
@@ -433,7 +449,7 @@ public class MySqlConnection
     {
         if(!signalHistoryRecordCreated.get())
         {
-            synchronized(MySqlConnection.class)
+            synchronized(SqlConnection.class)
             {
                 if(!signalHistoryRecordCreated.get())
                 {
@@ -449,18 +465,19 @@ public class MySqlConnection
         {
             statement = connection.createStatement();
             statement.setQueryTimeout(60);
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
             resultSet = statement.executeQuery("select * from SignalHistoryRecord");
             LinkedList <SignalHistoryRecord> newEntries = new LinkedList <SignalHistoryRecord>();
             while(resultSet.next())
                 newEntries.add(new SignalHistoryRecord(StrategyId.values()[resultSet.getInt("StrategyId")], Pair
-                    .values()[resultSet.getInt("Pair")], resultSet.getInt("IsBuy") == 1, resultSet.getTimestamp(
-                    "OpenDate").getTime(), resultSet.getTimestamp("CloseDate").getTime(), resultSet.getInt("Profit"),
+                    .values()[resultSet.getInt("Pair")], resultSet.getInt("IsBuy") == 1, dateFormat.parse(resultSet.getString(
+                    "OpenDate")).getTime(), dateFormat.parse(resultSet.getString("CloseDate")).getTime(), resultSet.getInt("Profit"),
                     resultSet.getDouble("VIX"), resultSet.getDouble("SSI1"), resultSet.getDouble("SSI2"), resultSet
                         .getInt("Low"), resultSet.getInt("High")));
             Collections.sort(newEntries);
             return newEntries;
         }
-        catch(SQLException e)
+        catch(Exception e)
         {
             DailyLog.logError("Error haciendo la lectura de la base de datos");
             try
@@ -480,123 +497,108 @@ public class MySqlConnection
             returnConnection(connection);
         }
     }
-
-    private static Connection newConnection()
+    
+    public static void backupDatabase()
     {
-        String dbConnectionString = DailyProperties
-            .getProperty("dailyBot.control.connection.MySqlConnection.DBAddress");
-        if(DailyProperties.isTesting())
-            dbConnectionString += "_testing";
-        String dbUserId = DailyProperties.getProperty("dailyBot.control.connection.MySqlConnection.DBUsername");
-        String dbPassword = DailyProperties.getProperty("dailyBot.control.connection.MySqlConnection.DBPassword");
-        for(int intento = 0; intento < 11; intento++)
+    	Connection connection = getConnection();
+        Statement statement = null;
+        try
         {
+            statement = connection.createStatement();
+            statement.setQueryTimeout(60);
+            statement.execute("BEGIN EXCLUSIVE TRANSACTION");
+            Path sourceFile = Paths.get(getDatabaseFilename());
+            Path targetFile = Paths.get(getBackupDatabaseFilename(false));
             try
             {
-                if(connectionCount.getAndIncrement() == 0)
-                    DriverManager.registerDriver(new Driver());
-                Connection conn = DriverManager.getConnection(dbConnectionString, dbUserId, dbPassword);
-                return conn;
+            	Files.copy(sourceFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
+            	if(!new File(getBackupDatabaseFilename(true)).exists())
+            	{
+            		targetFile = Paths.get(getBackupDatabaseFilename(true));
+                	Files.copy(sourceFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
+            	}
             }
-            catch(Exception e)
+            finally
             {
-                if(!connectionCount.compareAndSet(1, 1))
-                    connectionCount.getAndDecrement();
-                if(intento == 10)
-                {
-                    DailyLog.logError("No se pudo conectar a la base de datos en 10 intentos, reiniciando");
-                    DailyLog.tryInmediateReboot();
-                }
-                DailyThread.sleep(10000);
+            	statement.execute("ROLLBACK TRANSACTION");
             }
         }
-        return null;
-    }
-
-    private static LinkedBlockingQueue <Connection> startPool()
-    {
-        LinkedBlockingQueue <Connection> newPool = new LinkedBlockingQueue <Connection>();
-        int connectionNumber = Integer.parseInt(DailyProperties
-            .getProperty("dailyBot.control.connection.MySqlConnection.DBNumberOfConnections"));
-        for(int i = 0; i < connectionNumber; i++)
+        catch(Exception e)
+        {
+            DailyLog.logError("Error making backup " + e.getMessage());
             try
             {
-                newPool.put(newConnection());
+                connection.close();
             }
-            catch(InterruptedException e)
+            catch(Exception e1)
             {
-                DailyLog.logError(e.getMessage() + " Error de interrupcion en ConexionMySql");
             }
-        return newPool;
+            connection = null;
+        }
+        finally
+        {
+            close(statement);
+            returnConnection(connection);
+        }
+    }
+    
+    private static String getBackupDatabaseFilename(boolean permanent)
+    {
+    	String name = "";
+    	if(DailyProperties.isTesting())
+    		name = "dailybotTesting_backup";
+    	else
+    		name = "dailybot_backup";
+    	if(permanent)
+    	{
+    		Calendar calendar = Calendar.getInstance();
+    		name += calendar.get(Calendar.YEAR) + "" + (calendar.get(Calendar.MONTH) + 1) + "" + calendar.get(Calendar.DATE);
+    		name = "backups/" + name;
+    	}
+    	return name + ".sqlite";
+    }
+    
+    private static String getDatabaseFilename()
+    {
+    	if(DailyProperties.isAnalysis())
+    		return getBackupDatabaseFilename(false);
+    	else
+    	{
+	    	if(DailyProperties.isTesting())
+	    		return "dailybotTesting.sqlite";
+	    	else
+	    		return "dailybot.sqlite";
+    	}
     }
 
+    private static final AtomicReference <Connection> connectionInstance = new AtomicReference <Connection> ();
+    
     private static Connection getConnection()
     {
-        Connection possible = connectionPool.poll();
-        if(possible == null)
-        {
-            if(connectionCount.getAndAdd(0) >= 20)
-            {
-                boolean exception = false;
-                try
-                {
-                    possible = connectionPool.poll(60000L, TimeUnit.MILLISECONDS);
-                    if(possible.isClosed())
-                    {
-                        connectionCount.getAndDecrement();
-                        return getConnection();
-                    }
-                }
-                catch(Exception e)
-                {
-                    try
-                    {
-                        return getConnection();
-                    }
-                    catch(Exception e1)
-                    {
-                        exception = true;
-                    }
-                }
-                finally
-                {
-                    if(possible == null || exception == true)
-                    {
-                        DailyLog
-                            .logError("No se pudo obtener una conexion de la base de datos en 60 segundos, reiniciando");
-                        DailyLog.tryInmediateReboot();
-                    }
-                }
-                return possible;
-            }
-            else
-                return newConnection();
-        }
-        else
-            return possible;
+       if(connectionInstance.get() == null)
+       {
+    	   synchronized(SqlConnection.class)
+    	   {
+    		   if(connectionInstance.get() == null)
+    		   {
+    			   try
+    			   {
+	    			   Class.forName("org.sqlite.JDBC");
+	    			   Connection connection = DriverManager.getConnection("jdbc:sqlite:" + getDatabaseFilename());
+	    			   connectionInstance.set(connection);
+    			   }
+    			   catch(Exception e)
+    			   {
+    				   DailyLog.logError("Error opening connection: " + e);
+    				   throw new RuntimeException(e);
+    			   }
+    		   }
+    	   }
+       }
+       return connectionInstance.get();
     }
 
     private static void returnConnection(Connection connection)
     {
-        if(connection == null)
-        {
-            connectionCount.getAndDecrement();
-            return;
-        }
-        boolean exception = false;
-        try
-        {
-            connectionPool.put(connection);
-        }
-        catch(InterruptedException e)
-        {
-            DailyLog.logError(e.getMessage() + " Error de interrupcion en ConexionMySql");
-            exception = true;
-        }
-        if(exception)
-        {
-            connectionCount.getAndDecrement();
-            DailyLog.logError("Error, una conexion fue descartada sin ser valida");
-        }
     }
 }

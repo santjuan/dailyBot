@@ -1,12 +1,15 @@
 package dailyBot.model;
 
+import java.beans.XMLEncoder;
+import java.io.FileOutputStream;
 import java.io.Serializable;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import dailyBot.analysis.SignalHistoryRecord;
 import dailyBot.control.DailyLog;
-import dailyBot.control.DailyThread;
+import dailyBot.control.DailyProperties;
+import dailyBot.control.DailyUtils;
 import dailyBot.model.SignalProvider.SignalProviderId;
 import dailyBot.model.Strategy.StrategyId;
 
@@ -16,7 +19,7 @@ public class MultiFilter implements Serializable
 
 	protected final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock(true);
     protected final Lock read = readWriteLock.readLock();
-    protected final Lock write = DailyThread.getSafeWriteLock(readWriteLock);
+    protected final Lock write = DailyUtils.getSafeWriteLock(readWriteLock);
     private boolean active = false;
     private boolean[][] activeArray = new boolean[StrategyId.values().length][Pair.values().length];
     private int[][] activeFilters = new int[StrategyId.values().length][Pair.values().length];
@@ -32,19 +35,32 @@ public class MultiFilter implements Serializable
     	this.id = id;
     }
     
-    public void startFilters(Filter[] filters)
+    public void startFilters()
     {
+		String[] filterNames = DailyProperties.getProperty("dailyBot.model.MultiFilter." + id + ".filters").split(",");
+		Filter[] newFilters = new Filter[filterNames.length];
+		int i = 0;
+		for(String filter : filterNames)
+		{
+			String type = DailyProperties.getProperty("dailyBot.model.Filter." + filter + ".type");
+			if(type == null)
+				throw new RuntimeException("Null filter type in provider: " + id);
+			if(type.equals("external"))
+				newFilters[i++] = new ExternalProcessFilter(filter, id.toString() + "." + filter); 
+			else if(type.equals("basic"))
+				newFilters[i++] = new BasicFilter();
+			else
+				throw new RuntimeException("Unknown filter type: " + type + " in provider: " + id);
+		}
     	write.lock();
     	try
     	{
-    		this.filters = filters;
+    		this.filters = newFilters;
     	}
     	finally
     	{
     		write.unlock();
     	}
-    	for(Filter filter : this.filters)
-    		filter.startFilter(id);
     }
     
     public boolean hasActive(StrategyId strategyId, Pair pair)
@@ -224,7 +240,7 @@ public class MultiFilter implements Serializable
     	}
     }
     
-    public boolean filter(SignalHistoryRecord record, boolean sendMessage)
+    public boolean filter(SignalHistoryRecord record, boolean sendMessage, double entryPrice)
     {
     	read.lock();
     	try
@@ -239,9 +255,9 @@ public class MultiFilter implements Serializable
 	        boolean ok = or ? false : true;
 	        boolean any = false;
 	        String message = "Intentando abrir " + id.toString() + ", " + record.id.toString() + ", "
-	                + record.pair.toString() + ", " + record.pair.getCurrentPrice(record.buy) + ", "
+	                + record.pair.toString() + ", " + entryPrice + ", "
 	                + (record.buy ? "BUY" : "SELL");
-	        message += "precio actual: " + record.pair.getCurrentPrice(record.buy) + "\n";
+	        message += " precio actual: " + record.pair.getCurrentPrice(record.buy) + "\n";
 	        for(int i = 0; i < filters.length; i++)
 	        {
 	        	if((activeInt & 1) == 1)
@@ -252,7 +268,7 @@ public class MultiFilter implements Serializable
 	        			ok = ok || current;
 	        		else
 	        			ok = ok && current;
-	        		message += filters[i] + ": " + current + "\n";
+	        		message += filters[i].getName() + ": " + current + "\n";
 	        	}
 	        	activeInt >>= 1;
 	        }
@@ -263,6 +279,48 @@ public class MultiFilter implements Serializable
     	finally
     	{
     		read.unlock();
+    	}
+    }
+    
+    public void writePersistence()
+    {
+        try
+        {
+        	FileOutputStream fos = new FileOutputStream("filters/" + id + ".xml");
+            XMLEncoder encoder = new XMLEncoder(fos);
+            encoder.writeObject(this);
+            encoder.close();
+            fos.close();
+        }
+        catch(Exception e)
+        {
+            DailyLog.logError("Error writing filter: " + id.name() + " " + e.getMessage());
+        }
+    }
+    
+    public Filter[] filters()
+    {
+    	read.lock();
+    	try
+    	{
+    		return filters;
+    	}
+    	finally
+    	{
+    		read.unlock();
+    	}
+    }
+    
+    public void changeFilters(Filter[] filters)
+    {
+    	write.lock();
+    	try
+    	{
+    		this.filters = filters; 
+    	}
+    	finally
+    	{
+    		write.unlock();
     	}
     }
 }

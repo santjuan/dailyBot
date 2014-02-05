@@ -2,7 +2,6 @@ package dailyBot.analysis;
 
 import dailyBot.control.DailyLog;
 import dailyBot.model.SignalProvider.SignalProviderId;
-import dailyBot.view.RMIClientMain;
 
 public class SignalProviderRanges extends Ranges
 {
@@ -20,12 +19,7 @@ public class SignalProviderRanges extends Ranges
     {
         try
         {
-            if(id == null
-                || RMIClientMain.connection.getActiveSignalProvider(id.ordinal(), record.id.ordinal(),
-                		record.pair.ordinal()))
-                return RMIClientMain.connection.getFilterSignalProvider(id.ordinal()).filter(record, false);
-            else
-                return false;
+        	return Utils.getFilterSignalProvider(id.ordinal()).filter(record, false, 0.0d);
         }
         catch(Exception e)
         {

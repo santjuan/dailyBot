@@ -6,8 +6,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import dailyBot.control.DailyLog;
-import dailyBot.control.DailyThread;
-import dailyBot.control.connection.MySqlConnection;
+import dailyBot.control.DailyUtils;
+import dailyBot.control.connection.SqlConnection;
 import dailyBot.control.connection.XMLPersistentObject;
 import dailyBot.model.SignalProvider.SignalProviderId;
 
@@ -40,7 +40,7 @@ public class Strategy extends XMLPersistentObject
     protected List <StrategySignal> signals = new LinkedList <StrategySignal>();
     protected final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock(true);
     protected final Lock read = readWriteLock.readLock();
-    protected final Lock write = DailyThread.getSafeWriteLock(readWriteLock);
+    protected final Lock write = DailyUtils.getSafeWriteLock(readWriteLock);
 
     public Strategy()
     {
@@ -59,7 +59,7 @@ public class Strategy extends XMLPersistentObject
             affected.setLotNumber(affected.getLotNumber() - lotNumber);
             if(affected.getLotNumber() <= 0)
             {
-                MySqlConnection.addRecord(id, affected);
+                SqlConnection.addRecord(id, affected);
                 for(SignalProviderId signalProviderId : SignalProviderId.values())
                     signalProviderId.signalProvider().processSignal(affected, hit);
                 write.lock();

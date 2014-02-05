@@ -5,7 +5,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class DailyThreadInfo
+public class DailyLoopInfo
 {
     static class LastUpdate
     {
@@ -30,7 +30,7 @@ public class DailyThreadInfo
     private static final Map<Long, String> uniqueIdsReverse = new ConcurrentSkipListMap<Long, String>();
     private static final Map<String, LastUpdate> lastUpdates = new ConcurrentHashMap<String, LastUpdate>();
 
-    public static void registerThreadLoop(String name)
+    public static void registerLoop(String name)
     {
         building.put(name, new LastUpdate(name));
     }
@@ -44,7 +44,7 @@ public class DailyThreadInfo
             current.updates.put(key, value);
     }
 
-    public static void closeThreadLoop(String name)
+    public static void closeLoop(String name)
     {
         LastUpdate possible = building.get(name);
         if(possible != null)
@@ -52,7 +52,7 @@ public class DailyThreadInfo
         building.remove(name);
     }
 
-    public static String listThreads(long minutesAgo)
+    public static String listLoops(long minutesAgo)
     {
         long time = System.currentTimeMillis();
         time -= minutesAgo * 60L * 1000L;

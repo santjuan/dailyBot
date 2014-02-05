@@ -17,7 +17,7 @@ import com.zulutrade.trading.dtos.UpdateValueResponseMessage;
 
 import dailyBot.control.DailyLog;
 import dailyBot.control.DailyProperties;
-import dailyBot.control.DailyThread;
+import dailyBot.control.DailyUtils;
 import dailyBot.model.Broker;
 import dailyBot.model.Pair;
 import dailyBot.model.SignalProvider.SignalProviderId;
@@ -212,7 +212,7 @@ public class ZulutradeConnection implements Broker
         {
             long difference = System.currentTimeMillis() - lastOpened.get();
             if(difference >= 0 && difference < 16000)
-                DailyThread.sleep(16000 - difference);
+                DailyUtils.sleep(16000 - difference);
             lastOpened.set(System.currentTimeMillis());
             double stopPrice = currency.getCurrentPriceMinus(stop, isBuy);
             double limitPrice = currency.getCurrentPriceMinus(-limit, isBuy);

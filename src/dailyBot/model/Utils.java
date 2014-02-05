@@ -2,10 +2,11 @@ package dailyBot.model;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.List;
 import java.util.TreeMap;
 
+import dailyBot.analysis.SignalHistoryRecord;
+import dailyBot.control.DailyProperties;
 import dailyBot.control.connection.ChatConnection;
 import dailyBot.control.connection.EmailConnection;
 import dailyBot.control.connection.zulutrade.ZulutradeConnection;
@@ -101,15 +102,40 @@ public class Utils
         return (signals.isEmpty() ? "NO SIGNALS" : sendSignalTable(signals)) + "\n";
     }
 
-	public static void makeHourlyCheck(SignalProvider provider) 
+	public static void makeCheck(SignalProvider provider) 
 	{
 		String message = "";
 		message += "DailyBot last read: " + (System.currentTimeMillis() - DailyFXStrategySystem.lastReadTime.get()) + " ms ago\n";
 		message += "DailyBot last change: " + (System.currentTimeMillis() - DailyFXStrategySystem.lastChangeTime.get()) + " ms ago\n";
-		if(Calendar.getInstance().get(Calendar.HOUR_OF_DAY) == 19)
-			message += "Profit: " + provider.getProfit() + "\n";
+		message += provider.id + " profit: " + provider.getProfit() + "\n";
 		message += "Zulutrade last check: " + (System.currentTimeMillis() - ZulutradeConnection.lastCheckTime.get()) + " ms ago\n";
 		message += "Zulutrade last change: " + (System.currentTimeMillis() - ZulutradeConnection.lastChangeTime.get()) + " ms ago\n";
 		ChatConnection.sendMessage(message, true);
+	}
+	
+	public static int getId(StrategyId strategy, Pair pair, boolean buy)
+	{
+		return strategy.ordinal() * 1000000 + pair.ordinal() * 100 + (buy ? 1 : 0);
+	}
+
+	public static int getId(SignalHistoryRecord record) 
+	{
+		return getId(record.id, record.pair, record.buy);
+	}
+
+	public static List <Integer> getSendHours() 
+	{
+		try
+		{
+			String[] hours = DailyProperties.getProperty("dailyBot.model.Utils.checkhours").split(",");
+			ArrayList <Integer> hoursList = new ArrayList <Integer> ();
+			for(String h : hours)
+				hoursList.add(Integer.parseInt(h));
+			return hoursList;
+		}
+		catch(Exception e)
+		{
+			return Arrays.asList(19);
+		}
 	}
 }

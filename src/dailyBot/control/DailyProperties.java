@@ -54,4 +54,16 @@ public class DailyProperties
     {
         verbose.set(isVerbose);
     }  
+    
+    private static final AtomicBoolean analysis = new AtomicBoolean(false);
+
+    public static boolean isAnalysis()
+    {
+        return analysis.get();
+    }
+
+    public static void setAnalysis(boolean isAnalysis)
+    {
+        analysis.set(isAnalysis);
+    }  
 }

@@ -1,4 +1,4 @@
-package dailyBot.view;
+package dailyBot.analysis.view;
 
 import java.awt.BorderLayout;
 import java.awt.Color;

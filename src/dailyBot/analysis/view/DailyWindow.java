@@ -1,4 +1,4 @@
-package dailyBot.view;
+package dailyBot.analysis.view;
 
 import java.awt.Component;
 import java.awt.Dimension;

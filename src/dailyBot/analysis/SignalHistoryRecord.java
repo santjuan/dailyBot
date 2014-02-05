@@ -24,7 +24,7 @@ public class SignalHistoryRecord implements Comparable <SignalHistoryRecord>, Se
     public int low;
     public int high;
 
-    SignalHistoryRecord()
+    public SignalHistoryRecord()
     {
     }
 
@@ -108,6 +108,17 @@ public class SignalHistoryRecord implements Comparable <SignalHistoryRecord>, Se
         return new Long(openDate).compareTo(other.openDate);
     }
 
+    public String generateLine()
+    {
+    	 double[] characteristics = getCharacteristics();
+         double[] output = getOutput();
+         String toWrite = characteristics[0] + "";
+         for(int i = 1; i < characteristics.length; i++)
+             toWrite += " " + characteristics[i];
+         for(double d : output)
+             toWrite += " " + d;
+         return toWrite;
+    }
     @Override
     public String toString()
     {

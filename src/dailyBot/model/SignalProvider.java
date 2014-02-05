@@ -1,30 +1,27 @@
 package dailyBot.model;
 
+import java.beans.XMLDecoder;
+import java.io.File;
+import java.io.FileInputStream;
 import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import dailyBot.analysis.SignalHistoryRecord;
-import dailyBot.control.DailyBotMain;
+import dailyBot.control.DailyExecutor;
 import dailyBot.control.DailyLog;
+import dailyBot.control.DailyLoopInfo;
 import dailyBot.control.DailyProperties;
 import dailyBot.control.DailyRunnable;
-import dailyBot.control.DailyThread;
-import dailyBot.control.DailyThreadAdmin;
-import dailyBot.control.DailyThreadInfo;
-import dailyBot.control.connection.XMLPersistentObject;
+import dailyBot.control.DailyUtils;
 import dailyBot.control.connection.zulutrade.ZulutradeConnection;
 import dailyBot.model.Strategy.StrategyId;
-import dailyBot.model.dailyFx.NumpyFilter;
-import dailyBot.model.dailyFx.OctaveFilter;
 
-public class SignalProvider extends XMLPersistentObject
+public class SignalProvider
 {
-    private interface FilterFactory
-    {
-        public Filter[] getFilters(SignalProviderId id);
-    }
-
     private interface BrokerFactory
     {
         public Broker[] getBrokers(SignalProviderId id);
@@ -32,14 +29,7 @@ public class SignalProvider extends XMLPersistentObject
 
     public enum SignalProviderId
     {
-        DEMO(new FilterFactory()
-        {
-            @Override
-            public Filter[] getFilters(SignalProviderId id)
-            {
-                return new Filter[] { new BasicFilter() };
-            }
-        }, new BrokerFactory()
+        DEMO(new BrokerFactory()
         {
             @Override
             public Broker[] getBrokers(SignalProviderId id)
@@ -47,14 +37,7 @@ public class SignalProvider extends XMLPersistentObject
                 return new Broker[] { new ZulutradeConnection(id) };
             }
 
-        }, true), DAILYBOTSSIEURO(new FilterFactory()
-        {
-            @Override
-            public Filter[] getFilters(SignalProviderId id)
-            {
-                return new Filter[] { new OctaveFilter(id), new NumpyFilter(id), new BasicFilter() };
-            }
-        }, new BrokerFactory()
+        }, true), DAILYBOTSSIEURO(new BrokerFactory()
         {
             @Override
             public Broker[] getBrokers(SignalProviderId id)
@@ -65,12 +48,10 @@ public class SignalProvider extends XMLPersistentObject
 
         volatile transient SignalProvider thisSignalProvider = null;
         volatile transient BrokerFactory brokerFactory;
-        volatile transient FilterFactory filterFactory;
         volatile transient boolean inTesting;
 
-        private SignalProviderId(FilterFactory filter, BrokerFactory broker, boolean testing)
+        private SignalProviderId(BrokerFactory broker, boolean testing)
         {
-            filterFactory = filter;
             brokerFactory = broker;
             this.inTesting = testing;
         }
@@ -86,14 +67,8 @@ public class SignalProvider extends XMLPersistentObject
         {
             if(DailyProperties.isTesting() == inTesting)
             {
-                thisSignalProvider = SignalProvider.loadPersistence(this);
-                if(thisSignalProvider == null)
-                    thisSignalProvider = new SignalProvider(this);
-                if(thisSignalProvider.filter == null)
-                    thisSignalProvider.filter = new MultiFilter(this);
-                thisSignalProvider.filter.startFilters(filterFactory.getFilters(this));
+                thisSignalProvider = new SignalProvider(this);
                 thisSignalProvider.brokers = brokerFactory.getBrokers(this);
-                thisSignalProvider.startPersistenceThread();
             }
             else
                 thisSignalProvider = new InactiveSignalProvider();
@@ -101,7 +76,7 @@ public class SignalProvider extends XMLPersistentObject
     }
 
     protected volatile SignalProviderId id;
-    protected volatile MultiFilter filter;
+    protected final AtomicReference <MultiFilter> filter = new AtomicReference <MultiFilter> ();
     protected volatile Broker[] brokers;
 
     public SignalProvider()
@@ -111,6 +86,7 @@ public class SignalProvider extends XMLPersistentObject
     public SignalProvider(SignalProviderId id)
     {
         this.id = id;
+        loadFilter();
     }
 
     public String checkAllBrokers()
@@ -121,131 +97,119 @@ public class SignalProvider extends XMLPersistentObject
         return answer;
     }
 
-    protected void startPersistenceThread()
+    public void startPersistenceThread()
     {
-        DailyThread persistenceThread = new DailyThread(new DailyRunnable()
-        {
-            boolean messageSent = false, checked = false;
+    	DailyRunnable persistenceRunnable = new DailyRunnable("Presistence " + id, 2000000L, true)
+    	{
+    		AtomicBoolean messageSent = new AtomicBoolean(false);
+    		AtomicBoolean checked = new AtomicBoolean(false);
 
-            public void run()
-            {
-                DailyThread.sleep(180000);
-                while(true)
-                {
-                    if(id.signalProvider() == null || checkConsistency())
-                    {
-                        DailyLog.logError("Error de consistencia en " + id);
-                        id.startSignalProvider();
-                        return;
-                    }
-                    DailyThread.sleep(10000L);
-                    DailyThreadInfo.registerThreadLoop(id.toString() + " persistence");
-                    DailyThreadInfo.registerUpdate(id.toString() + " persistence", "State", "storing in db");
-                    try
-                    {
-                        writePersistence();
-                        DailyThreadInfo.registerUpdate(id.toString() + " persistence", "State",
-                            "data stored without errors");
-                    }
-                    catch(Exception e)
-                    {
-                        DailyThreadInfo.registerUpdate(id.toString() + " persistence", "State", "error storing in db "
-                            + e + " " + e.getMessage());
-                        throw e;
-                    }
-                    finally
-                    {
-                        DailyThreadInfo.closeThreadLoop(id.toString() + " persistence");
-                    }
-                    setLastUpdate(System.currentTimeMillis());
-                    DailyThreadInfo.registerThreadLoop(id.toString() + " checker");
-                    DailyThreadInfo.registerUpdate(id.toString() + " checker", "State", "waiting for market to open");
-                    while(DailyBotMain.marketClosed())
-                    {
-                        DailyThread.sleep(650000);
-                        setLastUpdate(System.currentTimeMillis());
-                    }
-                    DailyThreadInfo.registerUpdate(id.toString() + " checker", "State", "checking brokers consistency");
-                    try
-                    {
-                        checkBrokerConsistency();
-                    }
-                    catch(Exception e)
-                    {
-                        DailyLog.logError("Error chequeando consistencia del proveedor " + id);
-                    }
-                    finally
-                    {
-                        DailyThreadInfo.registerUpdate(id.toString() + " checker", "State",
-                            "brokers consistency checked");
-                    }
-                    Calendar calendar = Calendar.getInstance();
-                    int hour = calendar.get(Calendar.HOUR_OF_DAY);
-                    int minute = calendar.get(Calendar.MINUTE);
-                    if(minute > 40)
-                        messageSent = checked = false;
-                    else
-                    {
-                        try
-                        {
-                            if(!messageSent && hour == 19)
-                            {
-                                DailyLog.acummulateLog();
-                                DailyThreadInfo.registerThreadLoop(id.toString() + " check");
-                                DailyThreadInfo.registerUpdate(id.toString() + " check", "State", "checking brokers");
-                                for(Broker broker : brokers)
-                                    broker.checkConsistencyFull(true);
-                                DailyThreadInfo.registerUpdate(id.toString() + " check", "State", "brokers checked");
-                                DailyThreadInfo.closeThreadLoop(id.toString() + " check");
-                                messageSent = true;
-                                checked = true;
-                                DailyThread.sleep(900000L);
-                                DailyLog.sendAcummulated();
-                            }
-                            if(!checked)
-                            {
-                                DailyThreadInfo.registerThreadLoop(id.toString() + " check");
-                                DailyThreadInfo.registerUpdate(id.toString() + " check", "State", "checking brokers");
-                                for(Broker broker : brokers)
-                                    broker.checkConsistencyFull(false);
-                                DailyThreadInfo.registerUpdate(id.toString() + " check", "State", "brokers checked");
-                                DailyThreadInfo.closeThreadLoop(id.toString() + " check");
-                                Utils.makeHourlyCheck(SignalProvider.this);
-                                checked = true;
-                            }
-                        }
-                        catch(RuntimeException e)
-                        {
-                            DailyThreadInfo.registerUpdate(id.toString() + " checker", "State",
-                                "error checking brokers " + e + " " + e.getMessage());
-                            throw e;
-                        }
-                        finally
-                        {
-                            DailyThreadInfo
-                                .registerUpdate(id.toString() + " checker", "Hourly check", "check finished");
-                            DailyThreadInfo.closeThreadLoop(id.toString() + " checker");
-                        }
-                    }
-                    setLastUpdate(System.currentTimeMillis());
-                }
-            }
-
-        }, 2000000L);
-        persistenceThread.setName("Presistencia " + id);
-        DailyThreadAdmin.addThread(persistenceThread);
+    		public void runOnce()
+    		{
+    			if(id.signalProvider() == null || checkConsistency())
+    			{
+    				DailyLog.logError("Error de consistencia en " + id);
+    				id.startSignalProvider();
+    				throw new RuntimeException("Consistency error");
+    			}
+    			DailyLoopInfo.registerLoop(id.toString() + " persistence");
+    			DailyLoopInfo.registerUpdate(id.toString() + " persistence", "State", "loading filter");
+    			try
+    			{
+    				loadFilter();
+    				DailyLoopInfo.registerUpdate(id.toString() + " persistence", "State",
+    						"filter loaded without errors");
+    			}
+    			catch(Exception e)
+    			{
+    				DailyLoopInfo.registerUpdate(id.toString() + " persistence", "State", "error loading filter "
+    						+ e + " " + e.getMessage());
+    			}
+    			finally
+    			{
+    				DailyLoopInfo.closeLoop(id.toString() + " persistence");
+    			}
+    			DailyLoopInfo.registerLoop(id.toString() + " checker");
+    			DailyLoopInfo.registerUpdate(id.toString() + " checker", "State", "checking brokers consistency");
+    			try
+    			{
+    				checkBrokerConsistency();
+    			}
+    			catch(Exception e)
+    			{
+    				DailyLog.logError("Error chequeando consistencia del proveedor " + id);
+    			}
+    			finally
+    			{
+    				DailyLoopInfo.registerUpdate(id.toString() + " checker", "State",
+    						"brokers consistency checked");
+    			}
+    			Calendar calendar = Calendar.getInstance();
+    			int hour = calendar.get(Calendar.HOUR_OF_DAY);
+    			int minute = calendar.get(Calendar.MINUTE);
+    			if(minute > 40)
+    			{
+    				messageSent.set(false); 
+    				checked.set(false);
+    			}
+    			else
+    			{
+    				try
+    				{
+    					if(!messageSent.get() && hour == 19)
+    					{
+    						DailyLog.acummulateLog();
+    						DailyLoopInfo.registerLoop(id.toString() + " check");
+    						DailyLoopInfo.registerUpdate(id.toString() + " check", "State", "checking brokers");
+    						for(Broker broker : brokers)
+    							broker.checkConsistencyFull(true);
+    						DailyLoopInfo.registerUpdate(id.toString() + " check", "State", "brokers checked");
+    						DailyLoopInfo.closeLoop(id.toString() + " check");
+    						messageSent.set(true);
+    						checked.set(true);
+    						DailyUtils.sleep(10000L);
+    						DailyLog.sendAcummulated();
+    					}
+    					if(!checked.get())
+    					{
+    						DailyLoopInfo.registerLoop(id.toString() + " check");
+    						DailyLoopInfo.registerUpdate(id.toString() + " check", "State", "checking brokers");
+    						for(Broker broker : brokers)
+    							broker.checkConsistencyFull(false);
+    						DailyLoopInfo.registerUpdate(id.toString() + " check", "State", "brokers checked");
+    						DailyLoopInfo.closeLoop(id.toString() + " check");
+    						if(Utils.getSendHours().contains(calendar.get(Calendar.HOUR_OF_DAY)))
+    							Utils.makeCheck(SignalProvider.this);
+    						checked.set(true);
+    					}
+    				}
+    				catch(RuntimeException e)
+    				{
+    					DailyLoopInfo.registerUpdate(id.toString() + " checker", "State",
+    							"error checking brokers " + e + " " + e.getMessage());
+    				}
+    				finally
+    				{
+    					DailyLoopInfo
+    					.registerUpdate(id.toString() + " checker", "Hourly check", "check finished");
+    					DailyLoopInfo.closeLoop(id.toString() + " checker");
+    				}
+    			}
+    		}
+    	};
+    	DailyExecutor.addRunnable(persistenceRunnable, 10, TimeUnit.MINUTES, 3, TimeUnit.MINUTES);
     }
 
     public boolean isActive(StrategyId strategyId, Pair pair)
     {
-    	return filter.hasActive(strategyId, pair);
+    	return filter.get().hasActive(strategyId, pair);
     }
 
-    public boolean filterAllow(SignalHistoryRecord record)
+    public boolean filterAllow(SignalHistoryRecord record, double entryPrice)
     {
         if(!isActive(record.id, record.pair))
             return false;
-        return filter.filter(record, true);
+        return filter.get().filter(record, true, entryPrice);
     }
 
     public void processSignal(StrategySignal signal, boolean hit)
@@ -271,14 +235,18 @@ public class SignalProvider extends XMLPersistentObject
             else
             {
                 if(!filterAllow(new SignalHistoryRecord(signal.getStrategyId(), signal.getPair(), signal.isBuy(),
-                    signal.getStartDate())))
+                    signal.getStartDate()), signal.getEntryPrice()))
                     for(Broker broker : brokers)
                         broker.setUniqueId(signal, 0L);
                 else
                 {
                 	if(Math.abs(signal.getPair().differenceInPips(signal.getEntryPrice(), signal.isBuy())) >= 50)
+                	{
                 		DailyLog.logError("Senal " + signal + " se abrio demasiado tarde, diferencia absoluta en"
                 				+ " pips: " + Math.abs(signal.getPair().differenceInPips(signal.getEntryPrice(), signal.isBuy())));
+                        for(Broker broker : brokers)
+                            broker.setUniqueId(signal, 0L);
+                	}
                 	else
 	                    for(Broker broker : brokers)
 	                        broker.openSignal(signal, signal.getStrategyId(), signal.getPair(), signal.isBuy());
@@ -383,7 +351,7 @@ public class SignalProvider extends XMLPersistentObject
             if(signal2 != null && signal.getUniqueId(strategyId.toString()) == 0)
                 signal.setUniqueId(strategyId.toString(), 1L);
         }
-        filter.changeActive(strategyId, pair, newActive);
+        filter.get().changeActive(strategyId, pair, newActive);
     }
 
     public boolean isOpen(StrategyId strategyId, Pair pair)
@@ -407,40 +375,37 @@ public class SignalProvider extends XMLPersistentObject
     	return profit;
     }
 
-    public void writePersistence()
+    public void loadFilter()
     {
         try
         {
-            writeObject();
+        	if(!new File("filters/" + id + ".xml").exists())
+        	{
+        		filter.set(new MultiFilter(id));
+        		filter.get().startFilters();
+        	}
+        	else
+        	{
+        		FileInputStream fis = new FileInputStream("filters/" + id + ".xml");
+        		XMLDecoder decoder = new XMLDecoder(fis);
+                MultiFilter answer = (MultiFilter) decoder.readObject();
+                fis.close();
+                decoder.close();
+                filter.set(answer);
+                filter.get().startFilters();
+        	}
         }
         catch(Exception e)
         {
-            DailyLog.logError("Error en la escritura en la base de datos: " + id.name() + " " + e.getMessage());
-        }
-    }
-
-    public static SignalProvider loadPersistence(SignalProviderId id)
-    {
-        try
-        {
-            return XMLPersistentObject.readObject(SignalProvider.class, id.ordinal());
-        }
-        catch(Exception e)
-        {
-            DailyLog.logError("Error de lectura de base de datos: " + id.name());
-            DailyLog.tryInmediateReboot();
-            return null;
+            DailyLog.logError("Error reading filter: " + id.name());
+    		filter.set(new MultiFilter(id));
+    		filter.get().startFilters();
         }
     }
 
     public MultiFilter getFilter()
     {
-        return filter;
-    }
-
-    public void setFilter(MultiFilter filter)
-    {
-        this.filter = filter;
+        return filter.get();
     }
 
     public List <StrategySignal> providerSignals()
@@ -464,12 +429,12 @@ public class SignalProvider extends XMLPersistentObject
 
     public boolean filterActive()
     {
-        return filter.isActive();
+        return filter.get().isActive();
     }
 
     public void changeFilterActive(boolean newActive)
     {
-    	filter.setActive(newActive);
+    	filter.get().setActive(newActive);
     }
 
     public void checkBrokerConsistency()
@@ -478,15 +443,9 @@ public class SignalProvider extends XMLPersistentObject
             broker.checkConsistency();
     }
 
-    @Override
-    protected int objectId()
-    {
-        return id.ordinal();
-    }
-
 	public void changeActiveFilter(StrategyId strategyId, Pair pair,
 			int newValue) 
 	{
-		filter.changeActiveFilter(strategyId, pair, newValue);
+		filter.get().changeActiveFilter(strategyId, pair, newValue);
 	}
 }

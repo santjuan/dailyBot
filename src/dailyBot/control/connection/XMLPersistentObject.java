@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class XMLPersistentObject
 {
-    private static final Map<String, String> createdTables = new ConcurrentHashMap<String, String>();
+    private static final Map <String, String> createdTables = new ConcurrentHashMap<String, String>();
 
     private static String getCreateTableStatement(String tableName)
     {
@@ -24,7 +24,7 @@ public abstract class XMLPersistentObject
             synchronized(XMLPersistentObject.class)
             {
                 if(createdTables.put(tableName, tableName) == null)
-                    MySqlConnection.executeSql(getCreateTableStatement(tableName));
+                    SqlConnection.executeSql(getCreateTableStatement(tableName));
             }
         }
     }
@@ -44,16 +44,17 @@ public abstract class XMLPersistentObject
         encoder.writeObject(this);
         encoder.close();
         String xml = new String(baos.toByteArray());
-        String insertSql = "INSERT INTO " + getTableName() + "(Id, Xml) VALUES (" + objectId() + ", '" + xml
-            + "') ON DUPLICATE KEY UPDATE Xml = '" + xml + "'";
-        MySqlConnection.executeSql(insertSql);
+        SqlConnection.executeSql("INSERT OR IGNORE INTO " + getTableName() + " VALUES (" + objectId() + ", ' ')");
+        String insertSql = "UPDATE " + getTableName() + " SET Xml = '" + xml
+            + "' where Id = " + objectId();
+        SqlConnection.executeSql(insertSql);
     }
 
     protected static <E extends XMLPersistentObject> E readObject(Class<E> clazz, int id)
     {
         tryCreateTable(clazz.getSimpleName());
         String selectSql = "SELECT Xml FROM " + clazz.getSimpleName() + " WHERE Id = " + id;
-        String xml = MySqlConnection.querySql(selectSql);
+        String xml = SqlConnection.querySql(selectSql);
         if(xml.trim().isEmpty())
             return null;
         else

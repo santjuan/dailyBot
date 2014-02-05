@@ -1,4 +1,4 @@
-package dailyBot.view;
+package dailyBot.analysis.view;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -6,11 +6,15 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
@@ -20,6 +24,7 @@ import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
 import dailyBot.analysis.SignalHistoryRecord;
+import dailyBot.model.SignalProvider.SignalProviderId;
 
 public class HistoricChart extends JFrame
 {
@@ -29,10 +34,38 @@ public class HistoricChart extends JFrame
     private JLabel monthsGraph;
     private List<SignalHistoryRecord> records = new ArrayList<SignalHistoryRecord> ();
     private ProgressChart progressChart;
+    private SignalProviderId signalProviderId;
+    private boolean allActive;
     
-    public HistoricChart(String title, ProgressChart progress)
+    private final static ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
+    
+    public HistoricChart(String title, ProgressChart progress, SignalProviderId id, boolean active)
     {
         super(title);
+    	signalProviderId = id;
+    	allActive = active;
+        Runnable update = new Runnable()
+        {
+    		@Override
+    		public void run() 
+    		{
+    			SwingUtilities.invokeLater(new Runnable()
+                {
+                    public void run()
+                    {
+                    	progressChart.changeRecords(SignalProviderFormat.getCurrentRecords(signalProviderId, allActive), SignalProviderFormat.getCurrentRecordsSize(signalProviderId, allActive));
+                    }
+                });
+                SwingUtilities.invokeLater(new Runnable()
+                {
+                    public void run()
+                    {
+                    	changeRecords(SignalProviderFormat.getCurrentRecords(signalProviderId, allActive));
+                    }
+                });
+    		}
+        };
+        service.scheduleWithFixedDelay(update, 10000, 1000, TimeUnit.MILLISECONDS);
         progressChart = progress;
         initialize();
         setPreferredSize(new Dimension(1237, 726));

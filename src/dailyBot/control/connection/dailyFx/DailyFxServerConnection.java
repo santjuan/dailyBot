@@ -23,8 +23,8 @@ import org.apache.http.params.BasicHttpParams;
 
 import dailyBot.control.DailyLog;
 import dailyBot.control.DailyProperties;
-import dailyBot.control.DailyThread;
-import dailyBot.control.DailyThreadInfo;
+import dailyBot.control.DailyLoopInfo;
+import dailyBot.control.DailyUtils;
 import dailyBot.control.connection.BasicConnection;
 import dailyBot.model.Pair;
 
@@ -130,9 +130,9 @@ public class DailyFxServerConnection extends BasicConnection
                         DailyFxHelper.instance.lock.unlock();
                         DailyFxHelper.instance = new DailyFxHelper();
                         DailyFxHelper.instance.lock.lock();
-                        DailyThread.sleep(10000);
+                        DailyUtils.sleep(10000);
                     }
-                    DailyThread.sleep(5000);
+                    DailyUtils.sleep(5000);
                     continue;
                 }
                 String[] result = new String[1];
@@ -141,7 +141,7 @@ public class DailyFxServerConnection extends BasicConnection
             }
             catch(Exception e)
             {
-                DailyThread.sleep(10000);
+                DailyUtils.sleep(10000);
             }
             finally
             {
@@ -172,7 +172,7 @@ public class DailyFxServerConnection extends BasicConnection
 
     public static void loadVix()
     {
-        DailyThreadInfo.registerUpdate("VIX updater", "VIX loading state", "loading VIX");
+        DailyLoopInfo.registerUpdate("VIX updater", "VIX loading state", "loading VIX");
         String error = "";
         for(int j = 0; j < 100; j++)
         {
@@ -180,7 +180,7 @@ public class DailyFxServerConnection extends BasicConnection
             {
                 Future<String> future = VIXLoadHelper.instance.executor.submit(VIXLoadHelper.instance);
                 String output = future.get(100, TimeUnit.SECONDS);
-                DailyThreadInfo.registerUpdate("VIX updater", "VIX loading state", "loaded page " + output);
+                DailyLoopInfo.registerUpdate("VIX updater", "VIX loading state", "loaded page " + output);
                 Pattern pattern = Pattern.compile("yfs_l10_");
                 Pattern pattern2 = Pattern.compile("\\d+.\\d+<");
                 Matcher matcher = pattern.matcher(output);
@@ -191,7 +191,7 @@ public class DailyFxServerConnection extends BasicConnection
                 {
                     String temp = matcher2.group();
                     temp = temp.substring(0, temp.length() - 1);
-                    DailyThreadInfo.registerUpdate("VIX updater", "VIX loaded value",
+                    DailyLoopInfo.registerUpdate("VIX updater", "VIX loaded value",
                         "loaded " + Double.parseDouble(temp));
                     VIXLoadHelper.instance.VIX.getAndSet(Double.doubleToLongBits(Double.parseDouble(temp)));
                     return;
@@ -200,9 +200,9 @@ public class DailyFxServerConnection extends BasicConnection
             catch(Exception e)
             {
                 error += " " + e.toString() + " " + e.getMessage();
-                DailyThreadInfo.registerUpdate("VIX updater", "VIX loading state",
+                DailyLoopInfo.registerUpdate("VIX updater", "VIX loading state",
                     "error loading VIX " + e + " " + e.getMessage());
-                DailyThread.sleep(6000);
+                DailyUtils.sleep(6000);
             }
         }
         DailyLog.logError(error + " Imposible leer el VIX");
@@ -252,7 +252,7 @@ public class DailyFxServerConnection extends BasicConnection
                 }
                 catch(Exception e)
                 {
-                    DailyThread.sleep(30000);
+                    DailyUtils.sleep(30000);
                 }
             }
             DailyLog.logError("Error logeando a DailyFX despues de 100 intentos, reiniciando");
@@ -327,7 +327,7 @@ public class DailyFxServerConnection extends BasicConnection
     public static boolean loadSSI()
     {
         String error = "";
-        DailyThreadInfo.registerUpdate("SSI updater", "SSI loading state", "starting load");
+        DailyLoopInfo.registerUpdate("SSI updater", "SSI loading state", "starting load");
         for(int i = 0; i < 100; i++)
         {
             SSILoadHelper.instance.lock.lock();
@@ -338,23 +338,23 @@ public class DailyFxServerConnection extends BasicConnection
                 String address = "https://plus.dailyfx.com/fxcmideas/" + SSILoadHelper.instance.url(page);
                 if(address.equals(SSILoadHelper.instance.cacheSSI))
                 {
-                    DailyThreadInfo.registerUpdate("SSI updater", "SSI loading state",
+                    DailyLoopInfo.registerUpdate("SSI updater", "SSI loading state",
                         "no new page, current page already in cache, not loading");
                     return false;
                 }
                 String page2 = SSILoadHelper.instance.readPage(address);
-                DailyThreadInfo.registerUpdate("SSI updater", "SSI loading state", "loaded SSI page " + page2);
+                DailyLoopInfo.registerUpdate("SSI updater", "SSI loading state", "loaded SSI page " + page2);
                 String result = SSILoadHelper.instance.readSSI(page2);
-                DailyThreadInfo.registerThreadLoop("SSI last load");
-                DailyThreadInfo.registerUpdate("SSI last load", "Loaded page", "loaded SSI page " + page2);
-                DailyThreadInfo.registerUpdate("SSI last load", "Loaded info", "loaded SSI info " + result);
-                DailyThreadInfo.closeThreadLoop("SSI last load");
+                DailyLoopInfo.registerLoop("SSI last load");
+                DailyLoopInfo.registerUpdate("SSI last load", "Loaded page", "loaded SSI page " + page2);
+                DailyLoopInfo.registerUpdate("SSI last load", "Loaded info", "loaded SSI info " + result);
+                DailyLoopInfo.closeLoop("SSI last load");
                 SSILoadHelper.instance.cacheSSI = address;
                 try
                 {
-                    DailyThreadInfo.registerThreadLoop("VIX updater");
+                    DailyLoopInfo.registerLoop("VIX updater");
                     loadVix();
-                    DailyThreadInfo.closeThreadLoop("VIX updater");
+                    DailyLoopInfo.closeLoop("VIX updater");
                 }
                 catch(Exception e)
                 {
@@ -364,7 +364,7 @@ public class DailyFxServerConnection extends BasicConnection
             }
             catch(Exception e)
             {
-                DailyThreadInfo.registerUpdate("SSI updater", "SSI loading state",
+                DailyLoopInfo.registerUpdate("SSI updater", "SSI loading state",
                     "error loading SSI " + e + " " + e.getMessage());
                 error += " " + e.getMessage();
             }

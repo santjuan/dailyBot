@@ -10,11 +10,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import javax.swing.JOptionPane;
-
 import dailyBot.control.connection.ChatConnection;
 import dailyBot.control.connection.EmailConnection;
-import dailyBot.model.SignalProvider.SignalProviderId;
 import dailyBot.model.Strategy.StrategyId;
 
 public class DailyLog
@@ -24,7 +21,17 @@ public class DailyLog
     private static volatile String acummulatedInfo = "";
     private static volatile String acummulatedError = "";
     private static volatile boolean acummulate = false;
-    private static final long currentLogId = System.currentTimeMillis();
+    
+    public static void logError(String error, boolean sendChat)
+    {
+    	if(sendChat)
+    		logError(error);
+    	else
+    	{
+	        sendMessage("DailyBot-error", error, true, true);
+	        checkHourErrors();
+    	}
+    }
 
     public static void logError(String error)
     {
@@ -73,16 +80,13 @@ public class DailyLog
         ChatConnection.sendMessage("DailyBot-" + title + "\n" + info, true);
     }
 
-    public static void logRMI(String error)
-    {
-        JOptionPane.showMessageDialog(null, error);
-    }
-
     private static void sendMessage(String title, String message, boolean email, boolean chat)
     {
         try
         {
-            FileWriter fileWriter = new FileWriter(new File("logs/log" + currentLogId + ".txt"), true);
+        	Calendar calendar = Calendar.getInstance();
+        	String number = calendar.get(Calendar.YEAR) + "" + (calendar.get(Calendar.MONTH) + 1) + "" + calendar.get(Calendar.DATE);
+            FileWriter fileWriter = new FileWriter(new File("logs/log" + number + (DailyProperties.isTesting() ? "testing" : "") + ".txt"), true);
             fileWriter.write(message);
             fileWriter.write(System.getProperty("line.separator"));
             fileWriter.close();
@@ -121,26 +125,6 @@ public class DailyLog
     public static void tryReboot()
     {
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        for(final SignalProviderId signalProviderId : SignalProviderId.values())
-        {
-            Future <Boolean> writer = executor.submit(new Callable <Boolean>()
-            {
-                @Override
-                public Boolean call() throws Exception
-                {
-                    signalProviderId.signalProvider().writePersistence();
-                    return true;
-                }
-            });
-            try
-            {
-                writer.get(10, TimeUnit.SECONDS);
-            }
-            catch(Exception e)
-            {
-                DailyLog.logError("Al reiniciar imposible escribir " + signalProviderId);
-            }
-        }
         for(final StrategyId strategyId : StrategyId.values())
         {
             Future <Boolean> writer = executor.submit(new Callable <Boolean>()
@@ -180,8 +164,8 @@ public class DailyLog
                     message += stackTraceElement + "\n";
             DailyLog.logError(message);
             sendAcummulated();
-            DailyThread.sleep(180000);
-            Runtime.getRuntime().exec("sudo reboot");
+            DailyUtils.sleep(180000);
+            Runtime.getRuntime().exec("service dailybot restart");
             System.exit(0);
             throw(new RuntimeException());
         }

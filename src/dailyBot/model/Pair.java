@@ -4,12 +4,13 @@ import java.util.Calendar;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.TimeZone;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import dailyBot.control.DailyLog;
-import dailyBot.control.DailyThread;
-import dailyBot.control.connection.MySqlConnection;
+import dailyBot.control.DailyUtils;
+import dailyBot.control.connection.SqlConnection;
 
 public enum Pair
 {
@@ -27,15 +28,16 @@ public enum Pair
     private transient double low = Double.POSITIVE_INFINITY;
     private transient double open = Double.NEGATIVE_INFINITY;
     private transient Calendar date = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+    private final transient AtomicLong pairUpdateCounter = new AtomicLong();
     private transient final LinkedList <StrategySignal> signals = new LinkedList <StrategySignal>();
     private transient static String message = "";
     private transient static int startNumber = 0;
     private transient final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock(true);
     private transient final Lock read = readWriteLock.readLock();
-    private transient final Lock write = DailyThread.getSafeWriteLock(readWriteLock);
+    private transient final Lock write = DailyUtils.getSafeWriteLock(readWriteLock);
     private transient final ReentrantReadWriteLock readWriteLockB = new ReentrantReadWriteLock(true);
     private transient final Lock readB = readWriteLockB.readLock();
-    private transient final Lock writeB = DailyThread.getSafeWriteLock(readWriteLockB);
+    private transient final Lock writeB = DailyUtils.getSafeWriteLock(readWriteLockB);
 
     private Pair(int multiplier)
     {
@@ -102,7 +104,7 @@ public enum Pair
                 {
                     currentBid = bid;
                     currentAsk = ask;
-                    double[] initialData = MySqlConnection.getPairData(this, date);
+                    double[] initialData = SqlConnection.getPairData(this, date);
                     low = initialData[0];
                     high = initialData[1];
                     open = initialData[2];
@@ -257,8 +259,8 @@ public enum Pair
             int day = current.get(Calendar.DAY_OF_MONTH);
             if(day != date.get(Calendar.DAY_OF_MONTH))
                 closeDay();
-            else
-                MySqlConnection.addPairData(this, open, getCurrentPrice(true), low, high);
+            else if((pairUpdateCounter.incrementAndGet() % 1800) == 0)
+                SqlConnection.addPairData(this, open, getCurrentPrice(true), low, high);
         }
         finally
         {

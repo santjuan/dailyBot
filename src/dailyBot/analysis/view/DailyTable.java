@@ -1,4 +1,4 @@
-package dailyBot.view;
+package dailyBot.analysis.view;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -11,7 +11,7 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 
-import dailyBot.control.DailyLog;
+import dailyBot.analysis.Utils;
 import dailyBot.model.StrategySignal;
 import dailyBot.model.Strategy.StrategyId;
 import dailyBot.model.SignalProvider.SignalProviderId;
@@ -45,11 +45,11 @@ public class DailyTable extends JFrame
         List<StrategySignal> listaE = null;
         try
         {
-            listaE = RMIClientMain.connection.getStrategySignals(strategyId.ordinal());
+            listaE = Utils.getStrategySignals(strategyId.ordinal());
         }
         catch(Exception e)
         {
-            DailyLog.logRMI(e.getMessage() + " Error haciendo la conexion RMI");
+            RMIClientMain.logRMI(e.getMessage() + " Error haciendo la conexion RMI");
             System.exit(0);
         }
         toShow = new Object[listaE.size()][5];
@@ -62,12 +62,11 @@ public class DailyTable extends JFrame
                 + df.format(listaE.get(i).getStop());
             try
             {
-                toShow[i][4] = RMIClientMain.connection.getProfitStrategySignal(listaE.get(i).getStrategyId().ordinal(),
-                    listaE.get(i).getPair().ordinal());
+                toShow[i][4] = "Not available";
             }
             catch(Exception e)
             {
-                DailyLog.logRMI(e.getMessage() + " Error haciendo la conexion RMI");
+                RMIClientMain.logRMI(e.getMessage() + " Error haciendo la conexion RMI");
                 System.exit(0);
             }
         }
@@ -79,11 +78,11 @@ public class DailyTable extends JFrame
         List<StrategySignal> listaE = null;
         try
         {
-            listaE = RMIClientMain.connection.getSignalProviderSignals(signalProviderId.ordinal());
+            listaE = Utils.getSignalProviderSignals(signalProviderId.ordinal());
         }
         catch(Exception e)
         {
-            DailyLog.logRMI(e.getMessage() + " Error haciendo la conexion RMI");
+            RMIClientMain.logRMI(e.getMessage() + " Error haciendo la conexion RMI");
             System.exit(0);
         }
         toShow = new Object[listaE.size()][5];
@@ -92,7 +91,7 @@ public class DailyTable extends JFrame
             toShow[i][0] = listaE.get(i).getStrategyId().toString();
             try
             {
-                StrategySignal esta = RMIClientMain.connection.getStrategySignals(listaE.get(i).getStrategyId()
+                StrategySignal esta = Utils.getStrategySignal(listaE.get(i).getStrategyId()
                     .ordinal(), listaE.get(i).getPair().ordinal());
                 if(esta == null)
                 {
@@ -104,14 +103,13 @@ public class DailyTable extends JFrame
                 toShow[i][2] = listaE.get(i).getPair().toString();
                 toShow[i][3] = df.format(esta.getEntryPrice()) + " " + df.format(esta.stopDaily()) + " "
                     + df.format(esta.getStop());
-                toShow[i][4] = RMIClientMain.connection.getProfitStrategySignal(listaE.get(i).getStrategyId().ordinal(),
-                    listaE.get(i).getPair().ordinal())
+                toShow[i][4] = "Not available"
                     + " "
                     + listaE.get(i).getUniqueId("zulutrade-" + signalProviderId.toString());
             }
             catch(Exception e)
             {
-                DailyLog.logRMI(e.getMessage() + " Error haciendo la conexion RMI");
+                RMIClientMain.logRMI(e.getMessage() + " Error haciendo la conexion RMI");
                 System.exit(0);
             }
         }

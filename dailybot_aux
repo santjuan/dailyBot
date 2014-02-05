@@ -6,27 +6,14 @@ APP="dailybot"
  
 start() 
 {
-	argument="-J-Djava.rmi.server.codebase=file://"
-	argument=$argument$DAILYBOT_PATH
-	argument=$argument"bin/"
-	if pgrep "rmi";
-	then
-			echo "RMI running"
-	else
-			/usr/lib/jvm/java-7-oracle/bin/rmiregistry $argument &
-			echo "RMI started $!"
-	fi
 	cd $DAILYBOT_PATH
-	/usr/lib/jvm/java-7-oracle/bin/java -server -Xms256m -Xmx2048m -jar  -Djava.security.policy=java.policy dailyBot.jar &
+	$JAVA_HOME/bin/java -server -Xms32m -Xmx512m -jar  -Djava.security.policy=java.policy dailyBot_ec2.jar &
 	echo $! > $DAILYBOT_PATH"dailybotpid"
-	/usr/lib/jvm/java-7-oracle/bin/java -server -Xms256m -Xmx2048m -jar  -Djava.security.policy=java.policy dailyBot.jar testing &
-	echo $! > $DAILYBOT_PATH"dailybottestingpid"
 }
  
 stop() 
 {
   kill -9 $(cat $DAILYBOT_PATH"dailybotpid")
-  kill -9 $(cat $DAILYBOT_PATH"dailybottestingpid")
 }
  
 case "$1" in
