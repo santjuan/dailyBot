@@ -39,7 +39,10 @@ public class DailyLoopInfo
     {
         LastUpdate current = building.get(threadName);
         if(current == null)
-            DailyLog.logError("Error " + threadName + ", tried to register " + key + " before registering loop");
+        {
+        	if(!DailyProperties.isAnalysis())
+        		DailyLog.logError("Error " + threadName + ", tried to register " + key + " before registering loop");
+        }
         else
             current.updates.put(key, value);
     }

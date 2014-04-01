@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
@@ -24,6 +25,7 @@ import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
 import dailyBot.analysis.SignalHistoryRecord;
+import dailyBot.analysis.Utils;
 import dailyBot.model.SignalProvider.SignalProviderId;
 
 public class HistoricChart extends JFrame
@@ -37,7 +39,14 @@ public class HistoricChart extends JFrame
     private SignalProviderId signalProviderId;
     private boolean allActive;
     
-    private final static ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
+    private static final ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
+    public static final AtomicReference <Runnable> currentUpdate = new AtomicReference <Runnable> (new Runnable() 
+    {
+		@Override
+		public void run() 
+		{
+		}
+	});
     
     public HistoricChart(String title, ProgressChart progress, SignalProviderId id, boolean active)
     {
@@ -65,7 +74,8 @@ public class HistoricChart extends JFrame
                 });
     		}
         };
-        service.scheduleWithFixedDelay(update, 10000, 1000, TimeUnit.MILLISECONDS);
+        currentUpdate.set(update);
+        service.scheduleWithFixedDelay(update, 10000, 10000, TimeUnit.MILLISECONDS);
         progressChart = progress;
         initialize();
         setPreferredSize(new Dimension(1237, 726));
@@ -99,12 +109,10 @@ public class HistoricChart extends JFrame
         Calendar actual = fecha1;
         int acumuladoActual = 0;
         Calendar temp = Calendar.getInstance();
-        Calendar twoYears = Calendar.getInstance();
-        twoYears.add(Calendar.YEAR, -2);
         int cuentaActual = 0;
         for(SignalHistoryRecord registro : records)
         {
-            if(registro.openDate < twoYears.getTimeInMillis())
+            if(!Utils.isRelevant(registro.openDate))
                 continue;
             temp.setTimeInMillis(registro.openDate);
             if(temp.get(Calendar.MONTH) != actual.get(Calendar.MONTH))

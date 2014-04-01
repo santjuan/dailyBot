@@ -2,6 +2,7 @@ package dailyBot.model;
 
 import java.io.Serializable;
 
+import dailyBot.control.DailyLog;
 import dailyBot.control.connection.dailyFx.DailyFxServerConnection;
 import dailyBot.model.Strategy.StrategyId;
 
@@ -23,6 +24,7 @@ public class StrategySignal extends UniqueIdSignal implements Serializable
     private boolean stopTouched = false;
     private double stop;
     private double stopDaily = -1;
+    private boolean ignoreSignal = false;
 
     public StrategySignal()
     {
@@ -36,7 +38,7 @@ public class StrategySignal extends UniqueIdSignal implements Serializable
         startDate = Long.MIN_VALUE;
     }
 
-    public StrategySignal(StrategyId strategyId, boolean buy, Pair pair, int lotNumber, double entryPrice, double stop)
+    public StrategySignal(StrategyId strategyId, boolean buy, Pair pair, int lotNumber, double entryPrice, double stop, boolean warnInconsistency)
     {
         this.strategyId = strategyId;
         this.buy = buy;
@@ -48,6 +50,11 @@ public class StrategySignal extends UniqueIdSignal implements Serializable
         this.SSI2 = pair.pairFatherB().pairSSI();
         this.startDate = System.currentTimeMillis();
         this.stop = stop;
+        if(warnInconsistency && Math.abs(this.pair.differenceInPips(entryPrice, this.buy)) > 50)
+        {
+        	DailyLog.logError("Senal " + this.toString() + " se abrio demasiado tarde, precio entrada: " + this.entryPrice + ", precio actual: " + this.pair.getCurrentPrice(this.buy));
+        	this.ignoreSignal = true;
+        }
     }
 
     public void setStrategyId(StrategyId strategyId)
@@ -196,6 +203,16 @@ public class StrategySignal extends UniqueIdSignal implements Serializable
     {
         return stop;
     }
+    
+    public synchronized boolean isIgnoreSignal() 
+    {
+		return ignoreSignal;
+	}
+
+	public synchronized void setIgnoreSignal(boolean ignoreSignal) 
+	{
+		this.ignoreSignal = ignoreSignal;
+	}
 
     public synchronized void changeStopDaily(double stopDaily)
     {
@@ -207,7 +224,7 @@ public class StrategySignal extends UniqueIdSignal implements Serializable
         return stopDaily;
     }
 
-    @Override
+	@Override
     public String toString()
     {
         int lotNumber;

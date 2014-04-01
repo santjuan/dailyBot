@@ -87,7 +87,7 @@ public class dailyJSON
                 if(darEstrategia(s.strategyId) == null)
                     continue;
                 StrategySignal actual = new StrategySignal(darEstrategia(s.strategyId), compra,
-                    Pair.parsePair(s.symbol), s.curOpLots, s.entryPrice, stop);
+                    Pair.parsePair(s.symbol), s.curOpLots, s.entryPrice, stop, false);
                 nuevasSenales.add(actual);
             }
             dailyJson.Signal = null;

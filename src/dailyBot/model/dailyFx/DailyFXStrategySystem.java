@@ -5,17 +5,15 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 
 import dailyBot.control.DailyExecutor;
 import dailyBot.control.DailyLog;
+import dailyBot.control.DailyLoopInfo;
 import dailyBot.control.DailyProperties;
 import dailyBot.control.DailyRunnable;
-import dailyBot.control.DailyLoopInfo;
-import dailyBot.control.DailyUtils;
 import dailyBot.control.connection.dailyFx.DailyFxServerConnection;
 import dailyBot.model.Strategy;
 import dailyBot.model.Strategy.StrategyId;
@@ -47,23 +45,14 @@ public class DailyFXStrategySystem extends StrategySystem
     @Override
     public void startThreads()
     {
-        final DailyFXStrategySystem thisSystem = this;
         DailyRunnable monitorRunnable = new DailyRunnable("Monitor " + getClass().getCanonicalName(), 900000L, false)
         {
-        	private final AtomicBoolean firstTime = new AtomicBoolean(true);
-        	
             public void runOnce()
             {
-            	if(firstTime.get())
-            	{
-            		DailyLog.logInfo("Iniciando hilo " + thisSystem.getClass().getCanonicalName());
-            		firstTime.set(false);
-            	}
             	try
             	{
             		DailyLoopInfo.registerLoop("DailyFX updater");
             		checkConsistency();
-            		DailyUtils.sleep(DailyProperties.isTesting() ? 10000L : Integer.parseInt(DailyProperties.getProperty("dailyBot.model.dailyFx.DailyFXStrategySystem.updateMillis")));
             		DailyLoopInfo.registerUpdate("DailyFX updater", "State", "reading from DailyFX server");
             		String[] read = DailyFxServerConnection.readDailyFxServer();
             		DailyLoopInfo.registerLoop("DailyFX updater last read string");
@@ -92,7 +81,8 @@ public class DailyFXStrategySystem extends StrategySystem
             		{
             			DailyLoopInfo.registerUpdate("DailyFX updater", "State", "error processing " + e + " "
             					+ e.getMessage());
-            			DailyLog.logError(e.getMessage() + " Error en el ciclo dailyFX");
+            	       	if((errorCount.incrementAndGet() % 300) <= 1)
+            	       		DailyLog.logError(e.getMessage() + " Error en el ciclo dailyFX");
             		}
             		catch(Exception e1)
             		{
@@ -105,7 +95,7 @@ public class DailyFXStrategySystem extends StrategySystem
             	}
             }
         };
-        DailyExecutor.addRunnable(monitorRunnable, DailyProperties.isTesting() ? 10 : 1, TimeUnit.SECONDS, 3, TimeUnit.MINUTES);
+        DailyExecutor.addRunnable(monitorRunnable, DailyProperties.isTesting() ? 10000 : 500, TimeUnit.MILLISECONDS, 3, TimeUnit.MINUTES);
         DailyRunnable persistenceRunnable = new DailyRunnable("Presistence " + getClass().getCanonicalName(), 600000L, false) 
         {
             public void runOnce()
@@ -129,12 +119,13 @@ public class DailyFXStrategySystem extends StrategySystem
             	}
             }
         };
-        DailyExecutor.addRunnable(persistenceRunnable, 1, TimeUnit.MILLISECONDS, 3, TimeUnit.MINUTES);
+        DailyExecutor.addRunnable(persistenceRunnable, 3, TimeUnit.MINUTES, 3, TimeUnit.MINUTES);
     }
 
     public static final AtomicReference <Vector <StrategySignal>> lastRead = new AtomicReference <Vector <StrategySignal>>();
     public static final AtomicLong lastReadTime = new AtomicLong();
     public static final AtomicLong lastChangeTime = new AtomicLong();
+    private static final AtomicLong errorCount = new AtomicLong(-1);
 
     @Override
     protected ArrayList <StrategySignal> read(String[] input)
@@ -164,7 +155,9 @@ public class DailyFXStrategySystem extends StrategySystem
             ArrayList <StrategySignal> readSignals = read(read);
             DailyLoopInfo.registerUpdate("DailyFX updater", "Processing state", "processing readed signals");
             DailyLoopInfo.registerLoop("DailyFX updater last read objects");
-            String readLog = "";
+            String readLog = "";            
+            final int trailingStopHit = Integer.parseInt(DailyProperties
+                    .getProperty("dailyBot.model.dailyFx.DailyFXStrategySystem.trailingStopHit"));
             final int trailingStop = Integer.parseInt(DailyProperties
                 .getProperty("dailyBot.model.dailyFx.DailyFXStrategySystem.trailingStop"));
             for(StrategySignal signal : readSignals)
@@ -185,9 +178,9 @@ public class DailyFXStrategySystem extends StrategySystem
                         changed = true;
                         changedInternal = true;
                     	lastChangeTime.set(System.currentTimeMillis());
-                        if(current.getId() != StrategyId.BREAKOUT1 && DailyProperties.isVerbose())
+                        if(current.getId() != StrategyId.BREAKOUT1)
                         {
-                        	DailyLog.logInfoWithTitle("rangos", "Cambio: " + affected + " por: " + signal);
+                        	DailyLog.addRangeInfo("cambios", "Cambio: " + affected + " por: " + signal);
                         }
                     }
                     if(affected.getLotNumber() > signal.getLotNumber())
@@ -207,9 +200,9 @@ public class DailyFXStrategySystem extends StrategySystem
                         changed = true;
                         changedInternal = true;
                         lastChangeTime.set(System.currentTimeMillis());
-                        if(current.getId() != StrategyId.BREAKOUT1 && DailyProperties.isVerbose())
+                        if(current.getId() != StrategyId.BREAKOUT1)
                         {
-                        	DailyLog.logInfoWithTitle("rangos", "Cambio: " + affected + " por: " + signal);
+                        	DailyLog.addRangeInfo("cambios", "Cambio: " + affected + " por: " + signal);
                         }
                     }
                     else
@@ -223,13 +216,14 @@ public class DailyFXStrategySystem extends StrategySystem
                         }
                         else
                         {
-                            if(profit >= trailingStop)
+                            if(profit >= trailingStopHit)
                             {
                                 double stop = affected.getPair().getCurrentPriceMinus(trailingStop, affected.isBuy());
                                 if(affected.getPair().differenceInPips(stop, affected.getStop(), affected.isBuy()) > 0)
                                 {
                                     try
                                     {
+                                        DailyLog.addRangeInfo("mejora stops", "Mejorando stop: " + affected + ", stop anterior: " + affected.getStop() + ", nuevo stop: " + stop);
                                         affected.setStop(stop);
                                         changed = true;
                                         changedInternal = true;
@@ -274,9 +268,9 @@ public class DailyFXStrategySystem extends StrategySystem
                         signal.getEntryPrice(), affected);
                     changed = true;
                 	lastChangeTime.set(System.currentTimeMillis());
-                    if(current.getId() != StrategyId.BREAKOUT1 && DailyProperties.isVerbose())
+                    if(current.getId() != StrategyId.BREAKOUT1)
                     {
-                    	DailyLog.logInfoWithTitle("rangos", "Agregando: " + signal);
+                    	DailyLog.addRangeInfo("cambios", "Agregando: " + signal);
                     }
                 }
                 DailyLoopInfo.registerUpdate("DailyFX updater", "Processing state current signal",
@@ -305,9 +299,9 @@ public class DailyFXStrategySystem extends StrategySystem
                     if(!found)
                     {
                     	lastChangeTime.set(System.currentTimeMillis());
-                    	if(current.getId() != StrategyId.BREAKOUT1 && DailyProperties.isVerbose())
+                    	if(current.getId() != StrategyId.BREAKOUT1)
                     	{
-                    		DailyLog.logInfoWithTitle("rangos", "No encontrada: " + signal);
+                    		DailyLog.addRangeInfo("cambios", "No encontrada: " + signal);
                        	}
                         current.processSignalChange(signal.getPair(), true, signal.isBuy(), signal.getLotNumber(), 0,
                             signal);
@@ -318,13 +312,23 @@ public class DailyFXStrategySystem extends StrategySystem
         }
         catch(Exception e)
         {
-            DailyLog.logError(e.getMessage() + ": Error al procesar senales de dailyFX.");
+        	if((errorCount.incrementAndGet() % 300) == 0)
+        	{
+        		DailyLog.logError(e.toString() + ": Error al procesar senales de dailyFX.");
+        		String ste = "";
+        		for(StackTraceElement element : e.getStackTrace())
+        			ste += element.toString() + "\n";
+        		DailyLog.logError(ste);
+        	}
         }
     }
+    
+    private static final AtomicLong persistenceCounter = new AtomicLong(0);
 
     public void waitForChange()
     {
         long startTime = System.currentTimeMillis();
+        boolean didChange = false;
         systemLock.lock();
         try
         {
@@ -337,6 +341,7 @@ public class DailyFXStrategySystem extends StrategySystem
                 {
                     DailyLog.logError("Error de interrupcion en sistema dailyFx");
                 }
+            didChange = changed;
             changed = false;
         }
         finally
@@ -344,6 +349,7 @@ public class DailyFXStrategySystem extends StrategySystem
             systemLock.unlock();
         }
         DailyLoopInfo.registerUpdate("DailyFX persistence", "State", "storing in db");
+        if(didChange || ((persistenceCounter.incrementAndGet() % 12) == 0))
         writePersistence();
         DailyLoopInfo.registerUpdate("DailyFX persistence", "State", "stored to db without errors");
     }

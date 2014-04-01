@@ -6,12 +6,16 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import dailyBot.analysis.SignalHistoryRecord;
 import dailyBot.analysis.Utils;
 import dailyBot.control.DailyLog;
 import dailyBot.control.DailyProperties;
+import dailyBot.control.connection.EmailConnection;
 
 public class ExternalProcessFilter implements Filter
 {
@@ -22,6 +26,7 @@ public class ExternalProcessFilter implements Filter
 	
     private final String name;
     private final double[] parameters;
+    private final int loopCount;
     
     public ExternalProcessFilter(String name, String propertyName)
     {
@@ -37,59 +42,14 @@ public class ExternalProcessFilter implements Filter
     	parameters = new double[params.size()];
     	for(int i = 0; i < params.size(); i++)
     		parameters[i] = params.get(i);
+    	loopCount = Integer.parseInt(DailyProperties.getProperty("dailyBot.model.ExternalProcessFilter." + propertyName + ".loopCount"));
     }
 
     @Override
     public boolean filter(SignalHistoryRecord record)
     {
-        String result = process(record);
-        return result.compareToIgnoreCase("YES") == 0;
+        return process(record);
     }
-
-//    protected void load()
-//    {
-//        final String className = getClass().getSimpleName();
-//        new Thread(new Runnable()
-//        {
-//            @Override
-//            public void run()
-//            {
-//                DailyThreadInfo.registerThreadLoop(className + " filter " + id.toString());
-//                DailyThreadInfo.registerUpdate(className + " filter " + id.toString(), "State", "processing records");
-//                List<SignalHistoryRecord> records = Utils.getRecords();
-//                int count = 0;
-//                for(SignalHistoryRecord record : records)
-//                {
-//                    process(record);
-//                    DailyThreadInfo.registerUpdate(className + " filter " + id.toString(), "Current record",
-//                        "processing record " + ++count + "/" + records.size());
-//                }
-//                DailyThreadInfo.registerUpdate(className + " filter " + id.toString(), "Current record",
-//                    "all records processed");
-//                for(StrategyId strategyId : StrategyId.values())
-//                    for(StrategySignal signal : strategyId.strategy().duplicateSignals())
-//                        process(new SignalHistoryRecord(strategyId, signal.getPair(), signal.isBuy(),
-//                            signal.getStartDate(), System.currentTimeMillis(), -1, signal.getVIX(), signal.getSSI1(),
-//                            signal.getSSI2(), signal.getLow(), signal.getLow()));
-//                loaded.set(true);
-//                DailyThreadInfo.registerUpdate(className + " filter " + id.toString(), "State",
-//                    "finished processing records");
-//                DailyThreadInfo.closeThreadLoop(className + " filter " + id.toString());
-//            }
-//
-//        }).start();
-//    }
-//
-//    public static synchronized Boolean getFilterAnswer(TreeMap<SignalHistoryRecord, Boolean> map,
-//        SignalHistoryRecord key)
-//    {
-//        return map.get(key);
-//    }
-//
-//    public static synchronized boolean containKey(TreeMap<SignalHistoryRecord, Boolean> map, SignalHistoryRecord key)
-//    {
-//        return map.containsKey(key);
-//    }
 
     private void write(SignalHistoryRecord record)
     {
@@ -108,13 +68,13 @@ public class ExternalProcessFilter implements Filter
             first = first.trim();
             bufferedWriter.write(first + "\n");
             bufferedWriter.write(record.generateLine() + "\n");
-            long currentTime = System.currentTimeMillis();
             boolean writeAny = false;
             for(SignalHistoryRecord currentRecord : list)
             {
-                if((currentTime - currentRecord.openDate) <= (12L * 30L * 24L * 60L * 60L * 1000L)
-                    && currentRecord.id.equals(record.id) && currentRecord.pair.equals(record.pair)
-                    && (currentRecord.buy == record.buy) && currentRecord != record)
+                if(Utils.isRelevant(currentRecord.openDate) &&
+                   currentRecord.id.equals(record.id) && 
+                   currentRecord.pair.equals(record.pair) &&
+                   (currentRecord.buy == record.buy) && currentRecord != record)
                 {
                     bufferedWriter.write(currentRecord.generateLine() + "\n");
                     writeAny = true;
@@ -140,41 +100,59 @@ public class ExternalProcessFilter implements Filter
             DailyLog.logError("Error escribiendo registros en filtroProveedorIA " + e.getMessage());
         }
     }
+    
+    public final static Map <String, Integer> lastHit = Collections.synchronizedMap(new TreeMap <String, Integer> ());
 
-    private String process(SignalHistoryRecord record)
+    private boolean process(SignalHistoryRecord record)
     {
     	synchronized(name)
     	{
 	        write(record);
 	        try
 	        {
-	            Process process = Runtime.getRuntime().exec(
-	                DailyProperties.getProperty("dailyBot.model.ExternalProcessFilter." + name + ".command"));
-	            process.waitFor();
-	            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-	            try
-	            {
-		            String firstOutput = bufferedReader.readLine().trim();
-		            String secondOutput = bufferedReader.readLine();
-		            if(secondOutput != null)
-		                firstOutput = firstOutput + secondOutput;
-		            firstOutput = firstOutput.trim();
-		            return firstOutput.toUpperCase();
-	            }
-	            catch(Exception e)
-	            {
-	            	return "NO";
-	            }
+	        	for(int i = 0; i < loopCount; i++)
+	        	{
+		            Process process = Runtime.getRuntime().exec(
+		                DailyProperties.getProperty("dailyBot.model.ExternalProcessFilter." + name + ".command"));
+		            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+		            process.waitFor();
+		            try
+		            {
+			            String firstOutput = bufferedReader.readLine().trim();
+			            String secondOutput = bufferedReader.readLine();
+			            if(secondOutput != null)
+			                firstOutput = firstOutput + secondOutput;
+			            firstOutput = firstOutput.trim();
+			            if(firstOutput.toUpperCase().compareToIgnoreCase("YES") != 0)
+			            {
+			            	if(!lastHit.containsKey(name) && i > 0)
+			            	{			            		
+			            		lastHit.put(name, -1);
+			            		EmailConnection.sendEmail("DailyBot-error", "Starting " + name + " - new: " + lastHit.get(name), EmailConnection.SUPERADMINS);
+			            	}
+			            	if(i > lastHit.get(name) && i > 0)
+			            	{
+			            		EmailConnection.sendEmail("DailyBot-error", "Increasing " + name + " - new: " + i + ", before: " + lastHit.get(name), EmailConnection.SUPERADMINS);
+			            		lastHit.put(name, i);
+			            	}
+			            	return false;
+			            }
+		            }
+		            catch(Exception e)
+		            {
+		            }
+	        	}
+	        	return true;
 	        }
 	        catch(IOException e)
 	        {
 	            DailyLog.logError("Error de entrada salida en filtroProveedorIA " + e.getMessage());
-	            return "";
+	            return false;
 	        }
 	        catch(InterruptedException e)
 	        {
 	            DailyLog.logError("Error de interrupcion en filtroProveedorIA " + e.getMessage());
-	            return "";
+	            return false;
 	        }
     	}
     }

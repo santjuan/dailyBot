@@ -120,7 +120,8 @@ public class Utils
 			MultiFilter filter = filterAllActiveMap.get(ordinal);
 			for(StrategyId strategyId : StrategyId.values())
 				for(Pair pair : Pair.values())
-					filter.changeActive(strategyId, pair, false);
+					for(boolean isBuy : new boolean[]{true, false})
+						filter.changeActive(strategyId, pair, isBuy, false);
 		}
 		return filterAllActiveMap.get(ordinal);
 	}
@@ -161,5 +162,18 @@ public class Utils
 	public static String getFilterNameSignalProvider(SignalProviderId id, int i)
 	{
 		return DailyAnalysis.getFilterNameSignalProvider(id, i);
+	}
+	
+	public static boolean isRelevant(long time)
+	{
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTimeInMillis(time);
+		if(calendar.get(Calendar.YEAR) >= 2013)
+			return true;
+		else if(calendar.get(Calendar.YEAR) == 2012 && 
+		   calendar.get(Calendar.MONTH) >= Calendar.OCTOBER)
+			return true;
+		else
+			return false;
 	}
 }

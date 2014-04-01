@@ -26,12 +26,11 @@ public class SignalProviderFormat extends JFrame
     	{
 	    	List<SignalHistoryRecord> all = Utils.getRecords();
 	    	MultiFilter filter = Utils.getFilterSignalProvider(signalProviderId.ordinal(), allActive);
-	    	long actual = System.currentTimeMillis();
 	    	ArrayList<SignalHistoryRecord> selected = new ArrayList<SignalHistoryRecord> ();
 	    	for(SignalHistoryRecord r : all)
 	            if(signalProviderId != null
-	                && filter.hasActive(r.id, r.pair) 
-	                && ((actual - r.openDate) <= (12L * 30L * 24L * 60L * 60L * 1000L))
+	                && filter.hasActive(r.id, r.pair, r.buy) 
+	                && Utils.isRelevant(r.openDate)
 	                && filter.filter(r, false, 0.0))
 	            	selected.add(r);
 	    	return selected;
@@ -45,13 +44,12 @@ public class SignalProviderFormat extends JFrame
     public static int getCurrentRecordsSize(SignalProviderId signalProviderId, boolean allActive)
     {
     	List<SignalHistoryRecord> all = Utils.getRecords();
-    	long actual = System.currentTimeMillis();
     	int count = 0;
     	MultiFilter filter = Utils.getFilterSignalProvider(signalProviderId.ordinal(), allActive);
     	for(SignalHistoryRecord r : all)
     		if(signalProviderId != null
     		&& filter.hasActive(r.id,
-    				r.pair) && ((actual - r.openDate) <= (12L * 30L * 24L * 60L * 60L * 1000L)))
+    				r.pair, r.buy) && Utils.isRelevant(r.openDate))
     			count++;
     	return count;
     }

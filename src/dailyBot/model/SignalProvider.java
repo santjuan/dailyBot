@@ -11,12 +11,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import dailyBot.analysis.SignalHistoryRecord;
+import dailyBot.control.DailyBotMain;
 import dailyBot.control.DailyExecutor;
 import dailyBot.control.DailyLog;
 import dailyBot.control.DailyLoopInfo;
 import dailyBot.control.DailyProperties;
 import dailyBot.control.DailyRunnable;
-import dailyBot.control.DailyUtils;
 import dailyBot.control.connection.zulutrade.ZulutradeConnection;
 import dailyBot.model.Strategy.StrategyId;
 
@@ -133,7 +133,8 @@ public class SignalProvider
     			DailyLoopInfo.registerUpdate(id.toString() + " checker", "State", "checking brokers consistency");
     			try
     			{
-    				checkBrokerConsistency();
+    				if(!DailyBotMain.marketClosed())
+    					checkBrokerConsistency();
     			}
     			catch(Exception e)
     			{
@@ -156,30 +157,29 @@ public class SignalProvider
     			{
     				try
     				{
-    					if(!messageSent.get() && hour == 19)
+    					if((!messageSent.get()) && hour == 17)
     					{
-    						DailyLog.acummulateLog();
     						DailyLoopInfo.registerLoop(id.toString() + " check");
     						DailyLoopInfo.registerUpdate(id.toString() + " check", "State", "checking brokers");
-    						for(Broker broker : brokers)
-    							broker.checkConsistencyFull(true);
+    	    				if(!DailyBotMain.marketClosed())
+	    						for(Broker broker : brokers)
+	    							broker.checkConsistencyFull(true);
+    						Utils.checkSignals((StrategyId) null, 0);
+    						Utils.makeCheck(SignalProvider.this);
     						DailyLoopInfo.registerUpdate(id.toString() + " check", "State", "brokers checked");
     						DailyLoopInfo.closeLoop(id.toString() + " check");
     						messageSent.set(true);
     						checked.set(true);
-    						DailyUtils.sleep(10000L);
-    						DailyLog.sendAcummulated();
     					}
     					if(!checked.get())
     					{
     						DailyLoopInfo.registerLoop(id.toString() + " check");
     						DailyLoopInfo.registerUpdate(id.toString() + " check", "State", "checking brokers");
-    						for(Broker broker : brokers)
-    							broker.checkConsistencyFull(false);
+    						if(!DailyBotMain.marketClosed())
+	    						for(Broker broker : brokers)
+	    							broker.checkConsistencyFull(false);
     						DailyLoopInfo.registerUpdate(id.toString() + " check", "State", "brokers checked");
     						DailyLoopInfo.closeLoop(id.toString() + " check");
-    						if(Utils.getSendHours().contains(calendar.get(Calendar.HOUR_OF_DAY)))
-    							Utils.makeCheck(SignalProvider.this);
     						checked.set(true);
     					}
     				}
@@ -197,17 +197,17 @@ public class SignalProvider
     			}
     		}
     	};
-    	DailyExecutor.addRunnable(persistenceRunnable, 10, TimeUnit.MINUTES, 3, TimeUnit.MINUTES);
+    	DailyExecutor.addRunnable(persistenceRunnable, 5, TimeUnit.MINUTES, 3, TimeUnit.MINUTES);
     }
 
-    public boolean isActive(StrategyId strategyId, Pair pair)
+    public boolean isActive(StrategyId strategyId, Pair pair, boolean isBuy)
     {
-    	return filter.get().hasActive(strategyId, pair);
+    	return filter.get().hasActive(strategyId, pair, isBuy);
     }
 
     public boolean filterAllow(SignalHistoryRecord record, double entryPrice)
     {
-        if(!isActive(record.id, record.pair))
+        if(!isActive(record.id, record.pair, record.buy))
             return false;
         return filter.get().filter(record, true, entryPrice);
     }
@@ -255,40 +255,40 @@ public class SignalProvider
             }
         }
     }
-
-    public void openActive(StrategyId strategyId, Pair pair)
-    {
-    	if(!isActive(strategyId, pair))
-    		return;
-        StrategySignal toOpen = strategyId.strategy().hasPair(pair);
-        if((toOpen.getUniqueId(id.toString()) == 0L) || (toOpen == null) || (toOpen.getUniqueId(id.toString()) == 0L))
-            DailyLog.logError("Senal con par: " + pair + ", estrategia: " + strategyId + ", proveedor " + id
-                + " no estaba abierta y se intento reabrir.");
-        else
-        {
-            DailyLog.logInfoWithTitle("rangos", id + " abriendo senal por orden manual: " + strategyId + ", " + pair);
-            for(Broker broker : brokers)
-                if(broker.getUniqueId(toOpen) == 0L)
-                    broker.openSignal(toOpen, toOpen.getStrategyId(), toOpen.getPair(), toOpen.isBuy());
-        }
-    }
+//
+//    public void openActive(StrategyId strategyId, Pair pair)
+//    {
+//    	if(!isActive(strategyId, pair))
+//    		return;
+//        StrategySignal toOpen = strategyId.strategy().hasPair(pair);
+//        if((toOpen.getUniqueId(id.toString()) == 0L) || (toOpen == null) || (toOpen.getUniqueId(id.toString()) == 0L))
+//            DailyLog.logError("Senal con par: " + pair + ", estrategia: " + strategyId + ", proveedor " + id
+//                + " no estaba abierta y se intento reabrir.");
+//        else
+//        {
+//            DailyLog.logInfoWithTitle("rangos", id + " abriendo senal por orden manual: " + strategyId + ", " + pair);
+//            for(Broker broker : brokers)
+//                if(broker.getUniqueId(toOpen) == 0L)
+//                    broker.openSignal(toOpen, toOpen.getStrategyId(), toOpen.getPair(), toOpen.isBuy());
+//        }
+//    }
 
     public boolean checkConsistency()
     {
         return filter == null || id == null || brokers == null;
     }
 
-    public boolean getActive(StrategyId strategyId, Pair pair)
-    {
-        return isActive(strategyId, pair);
-    }
+//    public boolean getActive(StrategyId strategyId, Pair pair)
+//    {
+//        return isActive(strategyId, pair);
+//    }
 
     public boolean closeSignal(StrategyId strategyId, Pair pair)
     {
         StrategySignal toClose = strategyId.strategy().hasPair(pair);
         if(toClose.getUniqueId(strategyId.toString()) != 0L)
         {
-            DailyLog.logInfoWithTitle("rangos", strategyId + " cerrando senal por orden manual: " + strategyId + ", "
+        	DailyLog.addRangeInfo("manuales", strategyId + " cerrando senal por orden manual: " + strategyId + ", "
                 + pair);
             boolean any = false;
             for(Broker broker : brokers)
@@ -327,9 +327,9 @@ public class SignalProvider
         return any;
     }
 
-    public void setActive(StrategyId strategyId, Pair pair, boolean newActive)
+    public void setActive(StrategyId strategyId, Pair pair, boolean isBuy, boolean newActive)
     {
-        boolean currentActive = isActive(strategyId, pair);
+        boolean currentActive = isActive(strategyId, pair, isBuy);
         StrategySignal signal = strategyId.strategy().hasPair(pair);
         if(currentActive && !newActive)
         {
@@ -351,7 +351,7 @@ public class SignalProvider
             if(signal2 != null && signal.getUniqueId(strategyId.toString()) == 0)
                 signal.setUniqueId(strategyId.toString(), 1L);
         }
-        filter.get().changeActive(strategyId, pair, newActive);
+        filter.get().changeActive(strategyId, pair, isBuy, newActive);
     }
 
     public boolean isOpen(StrategyId strategyId, Pair pair)
@@ -443,9 +443,50 @@ public class SignalProvider
             broker.checkConsistency();
     }
 
-	public void changeActiveFilter(StrategyId strategyId, Pair pair,
+	public void changeActiveFilter(StrategyId strategyId, Pair pair, boolean isBuy,
 			int newValue) 
 	{
-		filter.get().changeActiveFilter(strategyId, pair, newValue);
+		filter.get().changeActiveFilter(strategyId, pair, isBuy, newValue);
+	}
+
+	public String checkFilterActive() 
+	{
+		if(!filter.get().isActive())
+			return "Unactive filter";
+		String answer = "";
+		for(StrategyId strategy : StrategyId.values())
+		{
+			boolean putStrategy = false;
+			for(Pair pair : Pair.values())
+			{
+				for(boolean buy : new boolean[]{true, false})
+					if(filter.get().hasActive(strategy, pair, buy))
+					{
+						int i = filter.get().getActiveFilters()[strategy.ordinal()][pair.ordinal()][buy ? 1 : 0];
+						if(i <= 1)
+							continue;
+						if(!putStrategy)
+							answer += "\n" + strategy + ":\n";
+						putStrategy = true;
+						answer += pair + " " + buy;
+						boolean or = (i & 1) == 1;
+						i >>= 1;
+						Filter[] filters = filter.get().filters();
+						for(int j = 0; j < filters.length; j++)
+						{
+							if((i & 1) == 1)
+								answer += " " + filters[j].getName();
+							i >>= 1;
+						}
+						if(!or)
+							answer += " and";
+						answer += "\n";
+					}
+			}
+		}
+		answer = answer.trim();
+		if(answer.isEmpty())
+			answer += "No active pairs";
+		return answer;
 	}
 }

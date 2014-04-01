@@ -8,9 +8,13 @@ import java.io.FileWriter;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 
-import dailyBot.control.DailyLog;
 import dailyBot.control.DailyProperties;
+import dailyBot.control.connection.ChatConnection;
+import dailyBot.control.connection.EmailConnection;
+import dailyBot.control.connection.dailyFx.DailyFxServerConnection;
+import dailyBot.model.ExternalProcessFilter;
 import dailyBot.model.Filter;
 import dailyBot.model.MultiFilter;
 import dailyBot.model.Pair;
@@ -21,21 +25,37 @@ public class DailyAnalysis
 {
 	public static void updateAnalysis()
 	{
-		DailyLog.logError("Starting updating analysis", false);
+		ChatConnection.sendMessage("Starting updating analysis", true, ChatConnection.ADMINS);
 		FilterMap filterMap = new FilterMap();
 		Utils.reloadRecords();
 		List <SignalHistoryRecord> allRecords = Utils.getRecords();
+		String currentStatusLog = "";
 		for(SignalProviderId id : SignalProviderId.values())
 		{
 			MultiFilter multiFilter = new MultiFilter(id);
 			multiFilter.startFilters();
+			currentStatusLog += "\n" + id.toString() + ":\n";
 			for(Filter filter : multiFilter.filters())
 			{
 				Map <FilterMap.DoubleArray, Boolean> map = filterMap.getFilterMap(id.toString() + "." + filter.getName());
 				for(SignalHistoryRecord record : allRecords)
 					map.put(new FilterMap.DoubleArray(record), filter.filter(record));
+				currentStatusLog += filter.getName() + ":\n";
+				DailyFxServerConnection.loadSSI();
+				DailyFxServerConnection.loadVix();
+				for(StrategyId strategy : StrategyId.values())
+				{
+					currentStatusLog += strategy + ":\n";
+					for(Pair pair : Pair.values())
+						for(boolean buy : new boolean[]{true, false})
+							currentStatusLog += pair + " " + buy + " " + filter.filter(new SignalHistoryRecord(strategy, pair, buy)) + "\n";
+				}
 			}
 		}
+		String allHits = "";
+		for(Map.Entry<String, Integer> e : ExternalProcessFilter.lastHit.entrySet())
+			allHits += e.getKey() + " : " + e.getValue() + "\n";
+		EmailConnection.sendEmail("DailyBot-error", allHits, EmailConnection.SUPERADMINS);
 		filterMap.writePersistence();
 		for(StrategyId strategy : StrategyId.values())
 		{
@@ -60,7 +80,7 @@ public class DailyAnalysis
 				}
 			}
 		}
-		DailyLog.logError("Analysis updated", false);
+		ChatConnection.sendMessage("Analysis updated\n" + currentStatusLog, true, ChatConnection.ADMINS);
 	}
 	
 	private static class MapFilter implements Filter
@@ -127,6 +147,7 @@ public class DailyAnalysis
 	
 	public static void main(String[] args)
 	{
+		TimeZone.setDefault(TimeZone.getTimeZone("America/Bogota"));
 		DailyProperties.setAnalysis(true);
 		DailyProperties.setVerbose(true);
 		boolean saved = false;
@@ -142,6 +163,13 @@ public class DailyAnalysis
 			}
 			else
 				saved = false;
+			try
+			{
+				Thread.sleep(5000);
+			} 
+			catch (InterruptedException e)
+			{
+			}
 		}
 	}
 }

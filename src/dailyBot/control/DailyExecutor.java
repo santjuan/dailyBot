@@ -9,6 +9,8 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import dailyBot.control.connection.EmailConnection;
+import dailyBot.control.connection.dailyFx.DailyFxServerConnection;
 import dailyBot.model.Pair;
 
 public class DailyExecutor
@@ -48,15 +50,15 @@ public class DailyExecutor
             			messageSent.set(false);
             		else
             		{
-            			if((!messageSent.get()) && (hour == 19))
+            			if((!messageSent.get()) && (hour == 17))
             			{
             				DailyLoopInfo.registerUpdate("Runnable monitor", "State", "checking all runnables");
-            				DailyLog.acummulateLog();
             				String message = "";
             				for(DailyRunnable dailyRunnable : runnables)
             				{
             					DailyLoopInfo.registerUpdate("Runnable monitor", "Runnable check state",
             							"checking runnable " + dailyRunnable.getName());
+            					message += "\n" + dailyRunnable.getName() + "\n";
             					message += "Ultima actualizacion hace: "
             							+ (System.currentTimeMillis() - dailyRunnable.getLastUpdate())
             							+ " milisegundos, limite espera: " + dailyRunnable.getUpdateInterval()
@@ -69,12 +71,17 @@ public class DailyExecutor
             					message += pair.checkSignals();
             				Runtime runtime = Runtime.getRuntime();
             				long kilobytes = 1024L;
+            				message += "\n" + "SSI ultima carga:\n" + DailyFxServerConnection.lastLoad.get() + "\n\nPenultima carga:\n" + DailyFxServerConnection.secondLastLoad.get() + "\n";
+            				message += "\n" + "Informacion de transacciones:\n" + DailyLog.getRangeInfo((calendar.get(Calendar.DAY_OF_WEEK) == Calendar.FRIDAY) ? true : false) + "\n";
             				message += "\nMemoria usada: "
             						+ ((runtime.totalMemory() - runtime.freeMemory()) / kilobytes) + " kb";
             				message += "\nMemoria libre: " + (runtime.freeMemory() / kilobytes) + " kb";
             				message += "\nMemoria total: " + (runtime.totalMemory() / kilobytes) + " kb";
             				message += "\nMemoria limite: " + (runtime.maxMemory() / kilobytes) + " kb";
-            				DailyLog.logInfo(message);
+            				if(calendar.get(Calendar.DAY_OF_WEEK) == Calendar.FRIDAY)
+            					EmailConnection.sendEmail("DailyBot-info", message, EmailConnection.ADMINS | EmailConnection.WATCHERS | EmailConnection.SUPERADMINS);
+            				else
+            					EmailConnection.sendEmail("DailyBot-info", message, EmailConnection.WATCHERS);
             				messageSent.set(true);
             				DailyUtils.sleep(900000L);
             				DailyLog.sendAcummulated();

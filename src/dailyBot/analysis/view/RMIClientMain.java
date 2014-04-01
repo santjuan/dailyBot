@@ -2,6 +2,7 @@ package dailyBot.analysis.view;
 
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.util.TimeZone;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -86,7 +87,9 @@ public class RMIClientMain extends JFrame
 
     public static void main(String[] args)
     {
+		TimeZone.setDefault(TimeZone.getTimeZone("America/Bogota"));
 		DailyProperties.setAnalysis(true);
+		Utils.getRecords();
         new RMIClientMain();
     }
 }

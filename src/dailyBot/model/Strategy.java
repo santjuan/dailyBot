@@ -76,7 +76,7 @@ public class Strategy extends XMLPersistentObject
         }
         else
         {
-            StrategySignal newSignal = new StrategySignal(id, buy, pair, lotNumber, entryPrice, 0);
+            StrategySignal newSignal = new StrategySignal(id, buy, pair, lotNumber, entryPrice, 0, true);
             if(hasPair(pair) != null)
             {
                 DailyLog.logError("Error, par: " + pair + ", ya existe en esta estrategia " + id.toString());

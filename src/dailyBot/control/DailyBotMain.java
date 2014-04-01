@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import dailyBot.analysis.DailyAnalysis;
+import dailyBot.analysis.view.RMIClientMain;
 import dailyBot.control.connection.ChatConnection;
 import dailyBot.control.connection.SqlConnection;
 import dailyBot.control.connection.dailyFx.DailyFxServerConnection;
@@ -189,7 +190,7 @@ public class DailyBotMain
             			@Override
             			public String call() throws Exception
             			{
-            				ChatConnection.sendMessage("", false);
+            				ChatConnection.sendMessage("", false, ChatConnection.ADMINS | ChatConnection.WATCHERS);
             				return "";
             			}
             		});
@@ -278,6 +279,8 @@ public class DailyBotMain
 		TimeZone.setDefault(TimeZone.getTimeZone("America/Bogota"));
         if(args.length >= 1 && args[0] != null && args[0].equals("analysis"))
             DailyAnalysis.main(args);
+        if(args.length >= 1 && args[0] != null && args[0].equals("view"))
+            RMIClientMain.main(args);
         else
         {
 	        if(args.length >= 1 && args[0] != null && args[0].equals("testing"))
@@ -292,7 +295,7 @@ public class DailyBotMain
 	        }
 	        try
 	        {
-	            ChatConnection.sendMessage("starting", true);
+	            ChatConnection.sendMessage("starting", true, ChatConnection.ADMINS | ChatConnection.WATCHERS);
 	        }
 	        catch(Exception e)
 	        {
@@ -345,5 +348,5 @@ public class DailyBotMain
 	        DailyLoopInfo.registerUpdate("initial thread", "SSI load", "first SSI loaded");
 	        DailyLoopInfo.closeLoop("initial thread");
         }
-    }
+    }       
 }

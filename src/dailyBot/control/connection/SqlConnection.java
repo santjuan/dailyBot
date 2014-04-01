@@ -23,6 +23,7 @@ import java.util.SortedMap;
 import java.util.TimeZone;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import dailyBot.analysis.SignalHistoryRecord;
@@ -116,6 +117,11 @@ public class SqlConnection
                 DailyLog.logError("Entrada sospechosa: " + strategyId.name() + ", " + signal.getPair().name() + ", "
                     + dateLong + ", ganancia: " + profit + "?");
                 return;
+            }
+            if(signal.isIgnoreSignal())
+            {
+            	DailyLog.logError("Ignorando senal " + signal.toString() + " fue marcada para ser ignorada");
+            	return;
             }
             double VIX = signal.getVIX();
             double SSI1 = signal.getSSI1();
@@ -294,7 +300,8 @@ public class SqlConnection
     static class PairHistoryCache
     {
         private static EnumMap <Pair, TreeMap <Date, PairHistory>> cache = getCache();
-
+        private static AtomicLong lastLoadTime = new AtomicLong();
+        
         static synchronized EnumMap <Pair, TreeMap <Date, PairHistory>> getCache()
         {
         	DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
@@ -345,8 +352,15 @@ public class SqlConnection
 
         static synchronized SortedMap <Date, PairHistory> getUpUntil(Pair pair, Date until)
         {
-            if(cache.get(pair).tailMap(until).isEmpty())
-                cache = getCache();
+            if((cache.get(pair).tailMap(until).isEmpty()) && ((System.currentTimeMillis() - lastLoadTime.get()) >= 3600000L))
+            {
+            	cache = getCache();
+            	lastLoadTime.set(System.currentTimeMillis());
+            }
+            Calendar temp = Calendar.getInstance();
+            temp.setTimeInMillis(until.getTime());
+            temp.set(Calendar.HOUR_OF_DAY, 20);
+            temp.add(Calendar.DAY_OF_MONTH, -1);
             return cache.get(pair).subMap(java.sql.Date.valueOf("1900-01-01"), until);
         }
     }
@@ -458,7 +472,7 @@ public class SqlConnection
                 }
             }
         }
-        Connection connection = getConnection();
+        Connection connection = getExclusiveConnection();
         Statement statement = null;
         ResultSet resultSet = null;
         try
@@ -571,6 +585,21 @@ public class SqlConnection
     	}
     }
 
+    private static Connection getExclusiveConnection()
+    {
+    	try
+    	{
+    		Class.forName("org.sqlite.JDBC");
+    		Connection connection = DriverManager.getConnection("jdbc:sqlite:" + getDatabaseFilename());
+    		return connection;
+    	}
+    	catch(Exception e)
+    	{
+    		DailyLog.logError("Error opening connection: " + e);
+    		throw new RuntimeException(e);
+    	}
+    }
+    
     private static final AtomicReference <Connection> connectionInstance = new AtomicReference <Connection> ();
     
     private static Connection getConnection()

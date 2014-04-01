@@ -259,7 +259,7 @@ public enum Pair
             int day = current.get(Calendar.DAY_OF_MONTH);
             if(day != date.get(Calendar.DAY_OF_MONTH))
                 closeDay();
-            else if((pairUpdateCounter.incrementAndGet() % 1800) == 0)
+            else if((pairUpdateCounter.incrementAndGet() % 600) == 0)
                 SqlConnection.addPairData(this, open, getCurrentPrice(true), low, high);
         }
         finally

@@ -5,7 +5,6 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.LinkedList;
 
 import javax.swing.AbstractButton;
 import javax.swing.JCheckBox;
@@ -56,36 +55,18 @@ public class PairFormat extends JPanel
     private void initialize()
     {
         GridLayout gridLayout = new GridLayout();
-        int filas = (Pair.values().length - 1) % 2 == 0 ? (Pair.values().length - 1) / 2
-            : (Pair.values().length - 1) / 2 + 1;
+        int filas = Pair.values().length;
         gridLayout.setRows(filas);
         gridLayout.setColumns(2);
         this.setLayout(gridLayout);
-        LinkedList<Pair> paresA = new LinkedList<Pair>();
-        LinkedList<Pair> paresB = new LinkedList<Pair>();
-        int cuenta = 0;
-        boolean enA = false;
         for(Pair p : Pair.values())
         {
             if(p == Pair.ALL)
                 continue;
-            if(cuenta++ == filas)
-                enA = true;
-            if(enA)
-                paresA.add(p);
-            else
-                paresB.add(p);
+            this.add(darBoton(p, true));
+            this.add(darBoton(p, false));
         }
-        boolean parA = false;
         this.add(darBotonActivo());
-        while(!paresA.isEmpty())
-        {
-            if(parA)
-                this.add(darBoton(paresA.pollFirst()));
-            else
-                this.add(darBoton(paresB.pollFirst()));
-            parA = !parA;
-        }
         this.setVisible(true);
     }
 
@@ -108,22 +89,23 @@ public class PairFormat extends JPanel
                 {
                 	boolean activar = ((AbstractButton) e.getSource()).isSelected();
                 	Utils.getFilterSignalProvider(signalProviderId.ordinal()).setActive(activar);
+            		HistoricChart.currentUpdate.get().run();
                 }
             });
         return nuevo;
     }
 
-    private JCheckBox darBoton(Pair p)
+    private JCheckBox darBoton(Pair p, boolean b)
     {
         JCheckBox nuevo = new JCheckBox();
-        nuevo.setText(p.toString());
+        nuevo.setText(p.toString() + (b ? "_T" : "_F"));
         nuevo.setSize(new Dimension(30, 30));
-        nuevo.setSelected(Utils.getFilterSignalProvider(signalProviderId.ordinal()).hasActive(strategyId, p));
-        configurar(p, nuevo);
+        nuevo.setSelected(Utils.getFilterSignalProvider(signalProviderId.ordinal()).hasActive(strategyId, p, b));
+        configurar(p, b, nuevo);
         return nuevo;
     }
 
-    private void configurar(final Pair par, JCheckBox box)
+    private void configurar(final Pair par, final boolean b, JCheckBox box)
     {
         box.addActionListener(new ActionListener()
         {
@@ -132,21 +114,8 @@ public class PairFormat extends JPanel
             {
                 boolean activar = ((AbstractButton) e.getSource()).isSelected();
                 Utils.getFilterSignalProvider(signalProviderId.ordinal()).changeActive(strategyId,
-                    par, activar);
-                SwingUtilities.invokeLater(new Runnable()
-                {
-                    public void run()
-                    {
-                    	graficaProgreso.changeRecords(SignalProviderFormat.getCurrentRecords(signalProviderId, false), SignalProviderFormat.getCurrentRecordsSize(signalProviderId, false));
-                    }
-                });
-                SwingUtilities.invokeLater(new Runnable()
-                {
-                    public void run()
-                    {
-                    	graficaHistorial.changeRecords(SignalProviderFormat.getCurrentRecords(signalProviderId, false));
-                    }
-                });
+                    par, b, activar);
+        		HistoricChart.currentUpdate.get().run();
             }
         });
     }

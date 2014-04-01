@@ -9,6 +9,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -324,6 +325,9 @@ public class DailyFxServerConnection extends BasicConnection
         }
     }
 
+    public static AtomicReference <String> lastLoad = new AtomicReference <String> ("");
+    public static AtomicReference <String> secondLastLoad = new AtomicReference <String> ("");
+    
     public static boolean loadSSI()
     {
         String error = "";
@@ -359,7 +363,9 @@ public class DailyFxServerConnection extends BasicConnection
                 catch(Exception e)
                 {
                 }
-                DailyLog.logInfo("SSI cargado:\n" + result + "\nVix actual: " + getVIX());
+                DailyLog.addRangeInfo("SSI", "SSI cargado:\n" + result + "\nVix actual: " + getVIX());
+                secondLastLoad.set(lastLoad.get());
+                lastLoad.set("SSI cargado:\n" + result + "\nVix actual: " + getVIX());
                 return true;
             }
             catch(Exception e)

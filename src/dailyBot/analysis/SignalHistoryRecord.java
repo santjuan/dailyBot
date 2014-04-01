@@ -2,6 +2,7 @@ package dailyBot.analysis;
 
 import java.io.Serializable;
 
+import dailyBot.control.DailyProperties;
 import dailyBot.control.connection.dailyFx.DailyFxServerConnection;
 import dailyBot.model.Pair;
 import dailyBot.model.Strategy.StrategyId;
@@ -68,10 +69,11 @@ public class SignalHistoryRecord implements Comparable <SignalHistoryRecord>, Se
         this.closeDate = closeDate;
         this.profit = profit;
         this.low = low;
-        if(this.low <= -80 || this.profit <= -80)
+        int stop = Integer.parseInt(DailyProperties.getProperty("dailyBot.control.connection.zulutrade.ZulutradeConnection.DAILYBOTSSIEURO.stop"));
+        if(this.low <= -stop || this.profit <= -stop)
         {
-            this.profit = -80;
-            this.low = -80;
+            this.profit = -stop;
+            this.low = -stop;
         }
         this.high = high;
         this.VIX = vIX;

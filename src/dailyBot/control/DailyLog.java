@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -22,24 +25,13 @@ public class DailyLog
     private static volatile String acummulatedError = "";
     private static volatile boolean acummulate = false;
     
-    public static void logError(String error, boolean sendChat)
-    {
-    	if(sendChat)
-    		logError(error);
-    	else
-    	{
-	        sendMessage("DailyBot-error", error, true, true);
-	        checkHourErrors();
-    	}
-    }
-
     public static void logError(String error)
     {
         if(!acummulate)
             sendMessage("DailyBot-error", error, true, true);
         else
             acummulatedError += error + "\n";
-        ChatConnection.sendMessage(error, true);
+        ChatConnection.sendMessage(error, true, ChatConnection.ADMINS | ChatConnection.WATCHERS);
         checkHourErrors();
     }
 
@@ -74,24 +66,71 @@ public class DailyLog
             checkHourErrors();
     }
 
-    public static void logInfoWithTitle(String title, String info)
+    private static final Map <String, StringBuffer> rangeMapWatchers = Collections.synchronizedMap(new HashMap <String, StringBuffer> ());
+    private static final Map <String, StringBuffer> rangeMapAll = Collections.synchronizedMap(new HashMap <String, StringBuffer> ());
+    
+    private static StringBuffer getStringBuffer(String title, boolean all)
     {
-        sendMessage("DailyBot-" + title, info, true, true);
-        ChatConnection.sendMessage("DailyBot-" + title + "\n" + info, true);
+    	final Map <String, StringBuffer> rangeMap = all ? rangeMapAll : rangeMapWatchers;
+    	if(!rangeMap.containsKey(title))
+    		rangeMap.put(title, new StringBuffer(""));
+    	return rangeMap.get(title);
     }
-
+    
+    private static String format(int number)
+    {
+    	String answer = number + "";
+    	while(answer.length() < 2)
+    		answer = "0" + answer;
+    	return answer;
+    }
+    
+    public static synchronized void addRangeInfo(String title, String info)
+    {
+    	Calendar calendar = Calendar.getInstance();
+    	getStringBuffer(title, false).append(format(calendar.get(Calendar.MONTH) + 1) + "/" + format(calendar.get(Calendar.DAY_OF_MONTH)) + " " + format(calendar.get(Calendar.HOUR_OF_DAY)) + ":" + format(calendar.get(Calendar.MINUTE)) + " - " + info + "\n");
+    	getStringBuffer(title, true).append(format(calendar.get(Calendar.MONTH) + 1) + "/" + format(calendar.get(Calendar.DAY_OF_MONTH)) + " " + format(calendar.get(Calendar.HOUR_OF_DAY)) + ":" + format(calendar.get(Calendar.MINUTE)) + " - " + info + "\n");
+    }
+    
+    public static synchronized String getRangeInfo(boolean all)
+    {
+    	final Map <String, StringBuffer> rangeMap = all ? rangeMapAll : rangeMapWatchers;
+    	try
+    	{
+    		boolean notFirst = false;
+    		StringBuffer sb = new StringBuffer("");
+    		for(Map.Entry <String, StringBuffer> e : rangeMap.entrySet())
+    		{
+    			if(notFirst)
+    				sb.append("\n");
+    			notFirst = true;
+    			sb.append(e.getKey() + ":\n");
+    			sb.append(e.getValue().toString());
+    		}
+    		return sb.toString();
+    	}
+    	finally
+    	{
+    		for(StringBuffer sb : rangeMap.values())
+    			sb.setLength(0);
+    	}
+    }
+    
     private static void sendMessage(String title, String message, boolean email, boolean chat)
     {
         try
         {
-        	Calendar calendar = Calendar.getInstance();
-        	String number = calendar.get(Calendar.YEAR) + "" + (calendar.get(Calendar.MONTH) + 1) + "" + calendar.get(Calendar.DATE);
-            FileWriter fileWriter = new FileWriter(new File("logs/log" + number + (DailyProperties.isTesting() ? "testing" : "") + ".txt"), true);
-            fileWriter.write(message);
-            fileWriter.write(System.getProperty("line.separator"));
-            fileWriter.close();
+        	if(!email && !DailyProperties.isTesting())
+        	{
+	        	Calendar calendar = Calendar.getInstance();
+	        	String number = calendar.get(Calendar.YEAR) + "" + (calendar.get(Calendar.MONTH) + 1) + "" + calendar.get(Calendar.DATE);
+	            FileWriter fileWriter = new FileWriter(new File("logs/log" + number + ".txt"), true);
+	            fileWriter.write(message);
+	            fileWriter.write(System.getProperty("line.separator"));
+	            fileWriter.close();
+        	}
             if(email)
-                EmailConnection.sendEmail(title, message);
+                EmailConnection.sendEmail(title, message, EmailConnection.ADMINS | EmailConnection.WATCHERS | EmailConnection.SUPERADMINS);
         }
         catch(Exception e)
         {

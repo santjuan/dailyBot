@@ -43,7 +43,7 @@ public class ChatConnection
                     if(body.contains("chequear h"))
                     {
                         String answer = DailyExecutor.checkRunnables();
-                        sendMessage(answer, true);
+                        sendMessage(answer, true, ADMINS);
                         any = true;
                     }
                     if(body.contains("chequear t"))
@@ -76,7 +76,7 @@ public class ChatConnection
                             answer += "Arreglo de lectura nulo\n";
                         for(StrategySignal signal : all)
                             answer += "Senal extra no encontrada en lectura: " + signal + "\n\n";
-                        sendMessage(answer, true);
+                        sendMessage(answer, true, ADMINS);
                         any = true;
                     }
                     if(body.contains("chequear z"))
@@ -85,8 +85,8 @@ public class ChatConnection
                         for(SignalProviderId id : SignalProviderId.values())
                             answer += id + "\n" + id.signalProvider().checkAllBrokers() + "\n\n";
                         for(SignalProviderId signalProviderId : SignalProviderId.values())
-                            answer += Utils.checkSignals("zulutrade-" + signalProviderId.toString()) + "\n";
-                        sendMessage(answer, true);
+                            answer += Utils.checkSignals("zulutrade-" + signalProviderId.toString(), 1) + "\n";
+                        sendMessage(answer, true, ADMINS);
                         any = true;
                     }
                     for(StrategyId id : StrategyId.values())
@@ -94,15 +94,14 @@ public class ChatConnection
                         String command = "chequear " + id;
                         if(body.contains(command))
                         {
-                            String answer = Utils.checkSignals(id);
-                            sendMessage(answer, true);
+                            String answer = Utils.checkSignals(id, 1);
+                            sendMessage(answer, true, ADMINS);
                             any = true;
                         }
                     }
                     if(body.contains("chequear ALL"))
                     {
-                        String answer = Utils.checkSignals((StrategyId) null);
-                        sendMessage(answer, true);
+                        Utils.checkSignals((StrategyId) null, 1);
                         any = true;
                     }
                     if(body.contains("listar"))
@@ -118,7 +117,7 @@ public class ChatConnection
                         {
                         }
                         String answer = DailyLoopInfo.listLoops(minutes);
-                        sendMessage(answer, true);
+                        sendMessage(answer, true, ADMINS);
                         any = true;
                     }
                     if(body.contains("verbose"))
@@ -135,7 +134,7 @@ public class ChatConnection
                         }
                         String answer = verbose + "";
                         DailyProperties.setVerbose(verbose);
-                        sendMessage(answer, true);
+                        sendMessage(answer, true, ADMINS);
                         any = true;
                     }
                     if(body.contains("filtro"))
@@ -144,14 +143,14 @@ public class ChatConnection
                         String[] split = bodyThis.split(" ");
                         boolean ok = true;
                         String messageB = "";
-                        if(split.length >= 5)
+                        if(split.length >= 6)
                         {
                            try
                            {
                         	   SignalProviderId signalProviderId = null;
                         	   StrategyId strategy = null;
                         	   Pair pair = null;
-                        	   String answer = split[4];
+                        	   String answer = split[5];
                         	   while(answer.length() > 1 && answer.charAt(0) == '0')
                         		   answer = answer.substring(1);
                         	   int newValue = Integer.parseInt(answer, 2);
@@ -188,7 +187,7 @@ public class ChatConnection
                         				   if(c == Pair.ALL)
                         					   continue;
                         				   ok = true;
-                        				   a.signalProvider().changeActiveFilter(b, c, newValue);
+                        				   a.signalProvider().changeActiveFilter(b, c, split[4].equals("1"), newValue);
                         			   }
                            }
                            catch(Exception e)
@@ -203,7 +202,7 @@ public class ChatConnection
                         	messageB += "numero de argumentos invalido";
                         }
                         String answer = ok + " " + messageB;
-                        sendMessage(answer, true);
+                        sendMessage(answer, true, ADMINS);
                         any = true;
                     }
                     if(body.contains("consultar"))
@@ -221,7 +220,7 @@ public class ChatConnection
                         {
                         }
                         String answer = DailyLoopInfo.getLastUpdateInfo(id, current);
-                        sendMessage(answer, true);
+                        sendMessage(answer, true, ADMINS);
                         any = true;
                     }
                     if(body.contains("cerrar"))
@@ -252,7 +251,7 @@ public class ChatConnection
                         String answer = closed + " " + ok;
                         if(!ok)
                             answer += " " + Arrays.toString(split);
-                        sendMessage(answer, true);
+                        sendMessage(answer, true, ADMINS);
                         any = true;
                     }
                     if(body.contains("manual"))
@@ -273,7 +272,7 @@ public class ChatConnection
                                         opened = possibleId.signalProvider().openManualSignal(pair, isBuy.equals("1"));
                                         any = true;
                                     }
-                            sendMessage(opened + "", true);
+                            sendMessage(opened + "", true, ADMINS);
                         }
                         else if(split.length >= 4 && split[1].equals("close"))
                         {
@@ -299,7 +298,20 @@ public class ChatConnection
                                         any = true;
                                     }
                             }
-                            sendMessage(closed + "", true);
+                            sendMessage(closed + "", true, ADMINS);
+                        }
+                    }
+                    if(body.contains("comprobar"))
+                    {
+                        String bodyThis = body.substring(body.indexOf("comprobar"));
+                        String[] split = bodyThis.split(" ");
+                        for(SignalProviderId signalProvider : SignalProviderId.values())
+                        {
+                        	if(split.length >= 2 && split[1].equals(signalProvider.toString()))
+                        	{
+                        		any = true;
+                        		sendMessage(signalProvider.signalProvider().checkFilterActive(), true, ADMINS);
+                        	}
                         }
                     }
                     if(!any)
@@ -307,8 +319,8 @@ public class ChatConnection
                         if(((System.currentTimeMillis() - lastSentHelp.get()) >= 60000L) || body.contains("help")
                             || body.contains("ayuda"))
                         {
-                            String answer = "Comandos validos: chequear hilos\nchequear todos\nchequear zulutrade\nchequear IDESTRATEGIA\ncerrar IDESTRATEGIA IDPROVEEDOR PAR\nlistar MINUTOS\nfiltro PROVEEDOR ESTRATEGIA PAR VALOR\nconsultar IDUNICO ACTUAL\nmanual open IDPROVEEDOR PAIR ISBUY\nmanual close IDPROVEEDOR IDTRADE\nverbose VALOR";
-                            sendMessage("Recibido: " + body + "\n" + answer, true);
+                            String answer = "Comandos validos: chequear hilos\nchequear todos\nchequear zulutrade\nchequear IDESTRATEGIA\ncerrar IDESTRATEGIA IDPROVEEDOR PAR\nlistar MINUTOS\nfiltro PROVEEDOR ESTRATEGIA PAR ESCOMPRA VALOR\nconsultar IDUNICO ACTUAL\nmanual open IDPROVEEDOR PAIR ISBUY\nmanual close IDPROVEEDOR IDTRADE\nverbose VALOR\ncomprobar IDPROVEEDOR";
+                            sendMessage("Recibido: " + body + "\n" + answer, true, ADMINS);
                             lastSentHelp.set(System.currentTimeMillis());
                             any = true;
                         }
@@ -324,16 +336,21 @@ public class ChatConnection
     private static ConnectionConfiguration connectionConfig = new ConnectionConfiguration("talk.google.com", 5222,
         "gmail.com");
     private static final AtomicReference <XMPPConnection> xMPPConnection = new AtomicReference <XMPPConnection>();
-    private static final String toAddress = DailyProperties
-        .getProperty("dailyBot.control.connection.ChatConnection.emailTo");
-    private static Chat currentChat;
-    private static final String username = DailyProperties.isTesting() ? DailyProperties
+    private static final String[] toAddressWatchers = DailyProperties
+        .getProperty("dailyBot.control.connection.ChatConnection.emailToWatchers").split(",");
+    private static final String[] toAddressAdmins = DailyProperties
+            .getProperty("dailyBot.control.connection.ChatConnection.emailToAdmins").split(",");
+    private static Chat[] currentChat;
+    private static final String username = DailyProperties.isTesting() || DailyProperties.isAnalysis() ? DailyProperties
         .getProperty("dailyBot.control.connection.ChatConnection.emailFrom_testing") : DailyProperties
         .getProperty("dailyBot.control.connection.ChatConnection.emailFrom");
     private static final AtomicLong connectionCount = new AtomicLong();
     private static final AtomicLong lastConnection = new AtomicLong();
 
-    public static synchronized void sendMessage(String message, boolean send)
+    public static final int WATCHERS = 1;
+    public static final int ADMINS = 2;
+    
+    public static synchronized void sendMessage(String message, boolean send, int mask, boolean endChat)
     {
         if(DailyProperties.isTesting())
             message = "TESTING\n" + message;
@@ -372,19 +389,42 @@ public class ChatConnection
         }
         catch(Exception e)
         {
-            DailyLog.logErrorToDisk("Error conectandose al chat " + e.getMessage());
+            DailyLog.logError("Error conectandose al chat " + e.getMessage());
         }
         try
         {
-            currentChat = xMPPConnection.get().getChatManager().createChat(toAddress, listener);
+        	if(currentChat == null)
+        		currentChat = new Chat[toAddressWatchers.length + toAddressAdmins.length];
+        	for(int i = 0; i < currentChat.length; i++)
+        		currentChat[i] = xMPPConnection.get().getChatManager().createChat(((i < toAddressWatchers.length) ? toAddressWatchers[i] : toAddressAdmins[i - toAddressWatchers.length]), listener);
             if(message.length() > 30000)
                 message = message.substring(0, 30000) + "\ncortado";
             if(send)
-                currentChat.sendMessage(message);
+            	for(int i = 0; i < currentChat.length; i++)
+            	{
+            		boolean watcher = i < toAddressWatchers.length;
+            		boolean admin = !watcher;
+            		if(watcher && ((mask & WATCHERS) != 0))
+            			currentChat[i].sendMessage(message);
+            		if(admin && ((mask & ADMINS) != 0))
+            			currentChat[i].sendMessage(message);
+            	}
+            if(endChat)
+            {
+            	for(int i = 0; i < currentChat.length; i++)
+            		currentChat[i].removeMessageListener(listener);
+            	xMPPConnection.get().disconnect();
+            	xMPPConnection.set(null);
+            }
         }
         catch(Exception e)
         {
-            DailyLog.logErrorToDisk("Error conectandose al chat " + e.getMessage());
+            DailyLog.logError("Error conectandose al chat " + e.getMessage());
         }
+    }
+    
+    public static void sendMessage(String message, boolean send, int mask)
+    {
+    	sendMessage(message, send, mask, false);
     }
 }

@@ -21,8 +21,8 @@ public class MultiFilter implements Serializable
     protected final Lock read = readWriteLock.readLock();
     protected final Lock write = DailyUtils.getSafeWriteLock(readWriteLock);
     private boolean active = false;
-    private boolean[][] activeArray = new boolean[StrategyId.values().length][Pair.values().length];
-    private int[][] activeFilters = new int[StrategyId.values().length][Pair.values().length];
+    private boolean[][][] activeArray = new boolean[StrategyId.values().length][Pair.values().length][2];
+    private int[][][] activeFilters = new int[StrategyId.values().length][Pair.values().length][2];
     private Filter[] filters = new Filter[0];
     private SignalProviderId id;
     
@@ -63,12 +63,12 @@ public class MultiFilter implements Serializable
     	}
     }
     
-    public boolean hasActive(StrategyId strategyId, Pair pair)
+    public boolean hasActive(StrategyId strategyId, Pair pair, boolean isBuy)
     {
         read.lock();
         try
         {
-            return activeArray[strategyId.ordinal()][pair.ordinal()] && active;
+            return activeArray[strategyId.ordinal()][pair.ordinal()][isBuy ? 1 : 0] && active;
         }
         finally
         {
@@ -76,12 +76,12 @@ public class MultiFilter implements Serializable
         }
     }
 
-    public void changeActive(StrategyId strategyId, Pair pair, boolean active)
+    public void changeActive(StrategyId strategyId, Pair pair, boolean isBuy, boolean active)
     {
         write.lock();
         try
         {
-            activeArray[strategyId.ordinal()][pair.ordinal()] = active;
+            activeArray[strategyId.ordinal()][pair.ordinal()][isBuy ? 1 : 0] = active;
         }
         finally
         {
@@ -89,12 +89,12 @@ public class MultiFilter implements Serializable
         }
     }
     
-    public void changeActiveFilter(StrategyId strategyId, Pair pair, int newValue)
+    public void changeActiveFilter(StrategyId strategyId, Pair pair, boolean isBuy, int newValue)
     {
     	write.lock();
         try
         {
-            activeFilters[strategyId.ordinal()][pair.ordinal()] = newValue;
+            activeFilters[strategyId.ordinal()][pair.ordinal()][isBuy ? 1 : 0] = newValue;
         }
         finally
         {
@@ -102,7 +102,7 @@ public class MultiFilter implements Serializable
         }
     }
     
-    public boolean[][] getActiveArray()
+    public boolean[][][] getActiveArray()
     {
         read.lock();
         try
@@ -115,24 +115,27 @@ public class MultiFilter implements Serializable
         }
     }
 
-    private boolean[][] fixSize(boolean[][] array)
+    private boolean[][][] fixSize(boolean[][][] array)
     {
         int sizeX = StrategyId.values().length;
         int sizeY = Pair.values().length;
+        int sizeZ = 2;
         if(array.length != sizeX || array.length == 0 || array[0].length != sizeY)
         {
-            boolean[][] newArray = new boolean[sizeX][sizeY];
+            boolean[][][] newArray = new boolean[sizeX][sizeY][sizeZ];
             for(int i = 0; i < Math.min(array.length, newArray.length); i++)
                 if(newArray.length != 0 && array.length != 0)
                     for(int j = 0; j < Math.min(array[0].length, newArray[0].length); j++)
-                        newArray[i][j] = array[i][j];
+                        if(newArray[0].length != 0 && array[0].length != 0)
+                        	for(int k = 0; k < Math.min(array[0][0].length, newArray[0][0].length); k++)
+                        		newArray[i][j][k] = array[i][j][k];
             return newArray;
         }
         else
             return array;
     }
 
-    public void setActiveArray(boolean[][] activeArray)
+    public void setActiveArray(boolean[][][] activeArray)
     {
         write.lock();
         try
@@ -145,7 +148,7 @@ public class MultiFilter implements Serializable
         }
     }
     
-    public int[][] getActiveFilters()
+    public int[][][] getActiveFilters()
     {
         read.lock();
         try
@@ -158,24 +161,27 @@ public class MultiFilter implements Serializable
         }
     }
 
-    private int[][] fixSize(int[][] array)
+    private int[][][] fixSize(int[][][] array)
     {
         int sizeX = StrategyId.values().length;
         int sizeY = Pair.values().length;
+        int sizeZ = 2;
         if(array.length != sizeX || array.length == 0 || array[0].length != sizeY)
         {
-            int[][] newArray = new int[sizeX][sizeY];
+            int[][][] newArray = new int[sizeX][sizeY][sizeZ];
             for(int i = 0; i < Math.min(array.length, newArray.length); i++)
                 if(newArray.length != 0 && array.length != 0)
                     for(int j = 0; j < Math.min(array[0].length, newArray[0].length); j++)
-                        newArray[i][j] = array[i][j];
+                        if(newArray[0].length != 0 && array[0].length != 0)
+                        	for(int k = 0; k < Math.min(array[0][0].length, newArray[0][0].length); k++)
+                        		newArray[i][j][k] = array[i][j][k];
             return newArray;
         }
         else
             return array;
     }
 
-    public void setActiveFilters(int[][] activeFilters)
+    public void setActiveFilters(int[][][] activeFilters)
     {
         write.lock();
         try
@@ -245,9 +251,9 @@ public class MultiFilter implements Serializable
     	read.lock();
     	try
     	{
-	    	if((!active) || (!activeArray[record.id.ordinal()][record.pair.ordinal()]))
+	    	if((!active) || (!activeArray[record.id.ordinal()][record.pair.ordinal()][record.buy ? 1 : 0]))
 	    		return false;
-	    	int activeInt = activeFilters[record.id.ordinal()][record.pair.ordinal()];
+	    	int activeInt = activeFilters[record.id.ordinal()][record.pair.ordinal()][record.buy ? 1 : 0];
 	    	boolean or = (activeInt & 1) == 1;
 	    	activeInt >>= 1;
 	        if(filters.length == 0 || activeInt == 0)
@@ -273,7 +279,7 @@ public class MultiFilter implements Serializable
 	        	activeInt >>= 1;
 	        }
 	        if(sendMessage)
-	        	DailyLog.logInfoWithTitle("dailybot-rangos", message);
+	        	DailyLog.addRangeInfo("intentos de apertura", message);
 	    	return any && ok;
     	}
     	finally

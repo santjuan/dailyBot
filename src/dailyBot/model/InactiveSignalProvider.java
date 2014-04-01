@@ -15,7 +15,7 @@ public class InactiveSignalProvider extends SignalProvider
     }
 
     @Override
-    public boolean isActive(StrategyId strategyId, Pair pair)
+    public boolean isActive(StrategyId strategyId, Pair pair, boolean isBuy)
     {
         return false;
     }
@@ -32,18 +32,7 @@ public class InactiveSignalProvider extends SignalProvider
     }
 
     @Override
-    public void openActive(StrategyId strategyId, Pair pair)
-    {
-    }
-
-    @Override
     public boolean checkConsistency()
-    {
-        return false;
-    }
-
-    @Override
-    public boolean getActive(StrategyId strategyId, Pair pair)
     {
         return false;
     }
@@ -67,7 +56,7 @@ public class InactiveSignalProvider extends SignalProvider
     }
 
     @Override
-    public void setActive(StrategyId strategyId, Pair pair, boolean newActive)
+    public void setActive(StrategyId strategyId, Pair pair, boolean isBuy, boolean newActive)
     {
     }
 
@@ -112,7 +101,7 @@ public class InactiveSignalProvider extends SignalProvider
     }
     
     @Override
-	public void changeActiveFilter(StrategyId strategyId, Pair pair,
+	public void changeActiveFilter(StrategyId strategyId, Pair pair, boolean isBuy,
 			int newValue) 
     {
     }

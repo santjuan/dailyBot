@@ -2,6 +2,7 @@ package dailyBot.model;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -23,7 +24,7 @@ public class Utils
         return allSignals.toArray(new StrategySignal[0]);
     }
 
-    public static String sendTable(String[] labels, String[][] contents)
+    public static String sendTable(String[] labels, String[][] contents, int limit)
     {
         StringBuilder answer = new StringBuilder("<html><body><table border=\"1\"><tr>");
         for(String label : labels)
@@ -37,11 +38,14 @@ public class Utils
             answer.append("</tr>");
         }
         answer.append("</table></body></html>");
-        EmailConnection.sendEmail("DailyBot-info", answer.toString());
+        if(limit != 0)
+        	EmailConnection.sendEmail("DailyBot-info", answer.toString(), EmailConnection.SUPERADMINS);
+        else
+        	EmailConnection.sendEmail("DailyBot-info", answer.toString(), (Calendar.getInstance().get(Calendar.DAY_OF_WEEK) == Calendar.FRIDAY) ? (EmailConnection.ADMINS | EmailConnection.WATCHERS | EmailConnection.SUPERADMINS) : EmailConnection.WATCHERS);
         return Arrays.deepToString(labels) + "\n\n" + Arrays.deepToString(contents);
     }
 
-    public static String sendSignalTable(List <StrategySignal> signals)
+    public static String sendSignalTable(List <StrategySignal> signals, int limit)
     {
         TreeMap <String, Integer> labelsMap = new TreeMap <String, Integer>();
         ArrayList <String> allLabels = new ArrayList <String>();
@@ -51,8 +55,10 @@ public class Utils
         allLabels.add("PAIR");
         allLabels.add("ENTRY");
         allLabels.add("STOP");
+        allLabels.add("STOP_DAILY");
         allLabels.add("PROFIT");
         allLabels.add("STOPDISTANCE");
+        allLabels.add("ISIGNORED");
         for(StrategySignal signal : signals)
         {
             for(String key : signal.getUniqueIdsMap().keySet())
@@ -72,34 +78,36 @@ public class Utils
             signalTable[index][3] = String.valueOf(signal.getPair());
             signalTable[index][4] = String.valueOf(signal.getEntryPrice());
             signalTable[index][5] = String.valueOf(signal.getStop());
-            signalTable[index][6] = String.valueOf(signal.getPair().differenceInPips(signal.getEntryPrice(),
+            signalTable[index][6] = String.valueOf(signal.stopDaily());
+            signalTable[index][7] = String.valueOf(signal.getPair().differenceInPips(signal.getEntryPrice(),
                 signal.isBuy()));
-            signalTable[index][7] = String.valueOf(signal.getPair().differenceInPips(signal.getStop(), signal.isBuy()));
+            signalTable[index][8] = String.valueOf(signal.getPair().differenceInPips(signal.getStop(), signal.isBuy()));
+            signalTable[index][9] = String.valueOf(signal.isIgnoreSignal());
             for(String key : signal.getUniqueIdsMap().keySet())
                 signalTable[index][labelsMap.get(key)] = String.valueOf(key.contains("time") ? (System
                     .currentTimeMillis() - signal.getUniqueId(key)) : signal.getUniqueId(key));
             index++;
         }
-        return sendTable(allLabels.toArray(new String[0]), signalTable);
+        return sendTable(allLabels.toArray(new String[0]), signalTable, limit);
     }
 
-    public static String checkSignals(String key)
+    public static String checkSignals(String key, int limit)
     {
         ArrayList <StrategySignal> signals = new ArrayList <StrategySignal>();
         for(StrategySignal signal : getAllSignals())
             if(signal.getUniqueId(key) != 0)
                 signals.add(signal);
-        return (signals.isEmpty() ? "NO SIGNALS" : sendSignalTable(signals)) + "\n";
+        return (signals.isEmpty() ? "NO SIGNALS" : sendSignalTable(signals, limit)) + "\n";
     }
 
-    public static String checkSignals(StrategyId id)
+    public static String checkSignals(StrategyId id, int limit)
     {
         ArrayList <StrategySignal> signals = new ArrayList <StrategySignal>();
         if(id == null)
             signals.addAll(Arrays.asList(getAllSignals()));
         else
             signals.addAll(id.strategy().duplicateSignals());
-        return (signals.isEmpty() ? "NO SIGNALS" : sendSignalTable(signals)) + "\n";
+        return (signals.isEmpty() ? "NO SIGNALS" : sendSignalTable(signals, limit)) + "\n";
     }
 
 	public static void makeCheck(SignalProvider provider) 
@@ -110,7 +118,7 @@ public class Utils
 		message += provider.id + " profit: " + provider.getProfit() + "\n";
 		message += "Zulutrade last check: " + (System.currentTimeMillis() - ZulutradeConnection.lastCheckTime.get()) + " ms ago\n";
 		message += "Zulutrade last change: " + (System.currentTimeMillis() - ZulutradeConnection.lastChangeTime.get()) + " ms ago\n";
-		ChatConnection.sendMessage(message, true);
+		ChatConnection.sendMessage(message, true, (Calendar.getInstance().get(Calendar.DAY_OF_WEEK) == Calendar.FRIDAY) ? (ChatConnection.ADMINS | ChatConnection.WATCHERS) : ChatConnection.WATCHERS);
 	}
 	
 	public static int getId(StrategyId strategy, Pair pair, boolean buy)
