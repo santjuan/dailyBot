@@ -125,14 +125,16 @@ public class ExternalProcessFilter implements Filter
 			            firstOutput = firstOutput.trim();
 			            if(firstOutput.toUpperCase().compareToIgnoreCase("YES") != 0)
 			            {
-			            	if(!lastHit.containsKey(name) && i > 0)
+			            	if(!lastHit.containsKey(name))
 			            	{			            		
 			            		lastHit.put(name, -1);
-			            		EmailConnection.sendEmail("DailyBot-error", "Starting " + name + " - new: " + lastHit.get(name), EmailConnection.SUPERADMINS);
+			            		if(i > 0)
+			            			EmailConnection.sendEmail("DailyBot-error", "Starting " + name + " - new: " + lastHit.get(name), EmailConnection.SUPERADMINS);
 			            	}
-			            	if(i > lastHit.get(name) && i > 0)
+			            	if(i > lastHit.get(name))
 			            	{
-			            		EmailConnection.sendEmail("DailyBot-error", "Increasing " + name + " - new: " + i + ", before: " + lastHit.get(name), EmailConnection.SUPERADMINS);
+			            		if(i > 0)
+			            			EmailConnection.sendEmail("DailyBot-error", "Increasing " + name + " - new: " + i + ", before: " + lastHit.get(name), EmailConnection.SUPERADMINS);
 			            		lastHit.put(name, i);
 			            	}
 			            	return false;
